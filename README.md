@@ -43,7 +43,7 @@ npm install light-runner
 
 **Requirements**
 
-- Node.js >= 20
+- Node.js >= 22
 - A running Docker daemon (Docker Desktop on macOS/Windows, `dockerd` on Linux)
 - Optional: [gVisor (`runsc`)](#gvisor-hardening) for kernel isolation
 
