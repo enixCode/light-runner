@@ -1,0 +1,11 @@
+node_modules
+dist
+.git
+.gitignore
+.claude
+*.md
+!README.md
+Dockerfile
+docker-compose.yml
+# Test harness is built separately; don't send it through the image cache twice.
+

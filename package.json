@@ -1,0 +1,52 @@
+{
+  "name": "light-runner",
+  "version": "0.8.0",
+  "description": "Run isolated Docker containers from Node.js",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/*.js",
+    "dist/*.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "clean": "node -e \"const fs=require('node:fs');try{for(const f of fs.readdirSync('dist')){fs.rmSync('dist/'+f,{recursive:true,force:true})}}catch(e){if(e.code!=='ENOENT')throw e}\"",
+    "build": "npm run clean && tsc",
+    "dev": "tsc --watch",
+    "test": "node --test \"dist/test/**/*.test.js\"",
+    "test:unit": "node --test \"dist/test/unit/*.test.js\"",
+    "test:e2e": "node --test \"dist/test/e2e/*.test.js\"",
+    "test:build": "npm run clean && tsc -p tsconfig.test.json",
+    "test:all": "npm run test:build && npm test",
+    "test:docker": "docker compose -f docker-compose.test.yml run --rm --build test",
+    "demo": "npm run test:build && node dist/examples/main.js",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "docker",
+    "sandbox",
+    "container",
+    "runner",
+    "isolation"
+  ],
+  "license": "AGPL-3.0",
+  "repository": "github:enixCode/light-runner",
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "tar": "^7.5.13"
+  }
+}

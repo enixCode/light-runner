@@ -1,0 +1,33 @@
+# =============================================================================
+# Test harness image for light-runner
+# =============================================================================
+#
+# Purpose: run the full test suite (unit + Docker-gated e2e) in a disposable
+# container that has no Node toolchain installed on the host machine.
+#
+# Architecture: sibling-container pattern (NOT Docker-in-Docker).
+#   - This container gets the host docker.sock bind-mounted in at runtime
+#     (see docker-compose.test.yml).
+#   - When light-runner tests call `docker run ...`, the request goes through
+#     the socket to the HOST daemon. The spawned alpine/python/node/etc.
+#     containers therefore land next to this one, as siblings, not nested.
+#   - No inner daemon, no privileged mode, no DinD overhead.
+#
+# Why node:22-alpine: Node 22 is the first LTS with native glob support in
+# `node --test "<pattern>"`. Alpine keeps the image under 70 MB total.
+#
+# Why docker-cli: we only need the CLI to talk to the host daemon. No engine.
+# =============================================================================
+
+FROM node:22-alpine
+
+RUN apk add --no-cache docker-cli
+
+WORKDIR /work
+
+# The container command:
+#   1. Wipe any stale `dist/` content in the named volume (can't `rm -rf` the
+#      mount point itself, so we delete its contents with `find`).
+#   2. `npm ci` into the `node_modules` named volume - first run ~20s, cached.
+#   3. `test:all` = compile src + tests -> dist/, then run node --test.
+CMD ["sh", "-lc", "find dist -mindepth 1 -delete 2>/dev/null || true; npm ci --no-audit --no-fund && npm run test:all"]

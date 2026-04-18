@@ -1,0 +1,50 @@
+# =============================================================================
+# Compose file for `npm run test:docker`
+# =============================================================================
+#
+# Spawns ONE disposable container that runs the full light-runner test suite.
+# See Dockerfile.test for the harness image rationale.
+#
+# Sibling-container pattern: /var/run/docker.sock is bind-mounted so the tests
+# can spawn real alpine/python/node/... containers on the HOST daemon. The
+# spawned containers are siblings of this one (not nested). Requires Docker
+# socket access on the host - on Windows/macOS Docker Desktop handles the
+# platform-specific translation.
+#
+# Lifecycle:
+#   - `docker compose -f docker-compose.test.yml run --rm --build test`
+#     builds the image (cached after first time), starts one container,
+#     runs the tests, and auto-removes the container at exit.
+#   - The named volumes survive across runs for fast iteration:
+#       test-node-modules -> /work/node_modules  (npm ci cache)
+#       test-dist         -> /work/dist          (compiled TS)
+#       test-npm-cache    -> /root/.npm          (npm download cache)
+#     Clean them with `docker compose -f docker-compose.test.yml down -v`.
+# =============================================================================
+
+services:
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    image: light-runner-tests
+    working_dir: /work
+    volumes:
+      # Live source (the container sees host edits immediately):
+      - .:/work
+      # Persistent build/install caches to skip re-install between runs:
+      - test-node-modules:/work/node_modules
+      - test-dist:/work/dist
+      - test-npm-cache:/root/.npm
+      # Host docker socket for the sibling-container pattern:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      CI: "1"
+    # No interactive TTY - we want clean streaming of test-runner output:
+    tty: false
+    stdin_open: false
+
+volumes:
+  test-node-modules:
+  test-dist:
+  test-npm-cache:
