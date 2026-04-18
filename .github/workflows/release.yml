@@ -30,7 +30,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 22
+          # Node 24 ships with npm 11+, required for npm Trusted Publishing (OIDC).
+          node-version: 24
           cache: npm
           registry-url: https://registry.npmjs.org
 
@@ -80,10 +81,13 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Publish to npm
+      - name: Publish to npm (Trusted Publishing via OIDC)
+        # No NODE_AUTH_TOKEN required: npm 11+ uses the `id-token: write`
+        # permission above to exchange a GitHub OIDC token for a short-lived
+        # npm credential. Configure the trusted publisher at
+        # https://www.npmjs.com/package/light-runner/access (once the package
+        # exists) or during first publish via `npm access grant`.
         if: steps.npm_check.outputs.exists == 'false'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public --provenance
 
       - name: Create GitHub Release
