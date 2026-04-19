@@ -64,6 +64,18 @@ export interface RunRequest {
    * `RunResult.extracted`, they do not fail the run.
    */
   extract?: ExtractSpec[];
+  /*
+   * When true, the container starts with `docker run -d` and the host process
+   * returns immediately. The run state is persisted under the state dir so a
+   * crashed host can resume it via `DockerRunner.attach(id)` later.
+   *
+   * Contract changes in detached mode:
+   *   - `input` is rejected (no stdin can survive process death)
+   *   - `onLog` is not called (no stream to host; use `docker logs` instead)
+   *   - The returned Execution.result still resolves when the container exits
+   *     for the host that launched it; a second host can re-attach by id.
+   */
+  detached?: boolean;
 }
 
 export interface RunResult {

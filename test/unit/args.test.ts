@@ -222,4 +222,30 @@ describe('buildDockerArgs', () => {
       assert.equal(count, 1, `cap ${cap} should appear exactly once`);
     }
   });
+
+  it('swaps --rm -i for -d when detached is true', () => {
+    const args = buildDockerArgs({
+      ...base(),
+      request: { image: 'alpine' },
+      detached: true,
+    });
+    assert.deepEqual(args.slice(0, 4), ['run', '-d', '--name', 'light-runner-abc']);
+    assert.ok(!args.includes('--rm'), 'detached runs must not use --rm');
+    assert.ok(!args.includes('-i'), 'detached runs must not attach stdin');
+  });
+
+  it('keeps every security flag when detached', () => {
+    const args = buildDockerArgs({
+      ...base(),
+      request: { image: 'alpine' },
+      detached: true,
+    });
+    // hardening invariants still apply in detached mode
+    assert.ok(args.includes('--security-opt'));
+    assert.ok(args.includes('no-new-privileges'));
+    assert.ok(args.includes('--pids-limit'));
+    assert.ok(args.includes('--memory'));
+    assert.ok(args.includes('--cpus'));
+    for (const cap of DANGEROUS_CAPS) assert.ok(args.includes(cap));
+  });
 });

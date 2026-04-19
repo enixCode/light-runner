@@ -1,6 +1,6 @@
 {
   "name": "light-runner",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Run isolated Docker containers from Node.js",
   "type": "module",
   "main": "./dist/index.js",
@@ -28,6 +28,10 @@
     "test:all": "npm run test:build && npm test",
     "test:docker": "docker compose -f docker-compose.test.yml run --rm --build test",
     "demo": "npm run test:build && node dist/examples/main.js",
+    "demo:detached": "npm run test:build && node dist/examples/detached-full.js",
+    "docs": "node -e \"require('node:fs').rmSync('docs/api',{recursive:true,force:true})\" && typedoc",
+    "preversion": "npm run docs && git add docs/api/",
+    "setup:hooks": "node scripts/install-hooks.js",
     "prepublishOnly": "npm run build"
   },
   "engines": {
@@ -44,6 +48,7 @@
   "repository": "github:enixCode/light-runner",
   "devDependencies": {
     "@types/node": "^25.6.0",
+    "typedoc": "^0.28.19",
     "typescript": "^6.0.3"
   },
   "dependencies": {

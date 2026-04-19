@@ -150,6 +150,11 @@ class DockerRunner {
   run(request: RunRequest): Execution;
   static isAvailable(): boolean;
   static cleanupOrphanVolumes(): number;
+
+  // experimental - see "Experimental features" section below
+  static attach(id: string): Execution | null;
+  static list(): RunState[];
+  static cleanupOrphanStates(): number;
 }
 
 class Execution {
@@ -157,8 +162,22 @@ class Execution {
   readonly result: Promise<RunResult>;
   cancel(): void;
   get cancelled(): boolean;
+
+  // experimental - see "Experimental features" section below
+  stop(options?: { signal?: string; grace?: number }): Promise<void>;
+  pause(): void;
+  resume(): void;
 }
 ```
+
+> **Experimental features** (added in v0.9): `RunRequest.detached`,
+> `DockerRunner.attach` / `list` / `cleanupOrphanStates`, and
+> `Execution.stop` / `pause` / `resume`. They pass the test suite and the
+> manual demo, but they are new and cover edge cases (signal forwarding
+> across runtimes, TCP connection behaviour during pause, cross-host state
+> dir semantics) that may surface bugs. **If anything does not work as
+> documented, please open an issue:
+> [github.com/enixCode/light-runner/issues](https://github.com/enixCode/light-runner/issues).**
 
 Full type signatures live in [src/types.ts](src/types.ts).
 

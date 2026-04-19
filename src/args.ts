@@ -13,11 +13,19 @@ export interface BuildArgsInput {
   containerName: string;
   volumeName: string;
   workdir: string;
+  /*
+   * When true, build args for `docker run -d` (detached). Drops --rm and -i
+   * so the container survives the host process and docker wait can read the
+   * exit code later. The caller is responsible for `docker rm` at cleanup.
+   */
+  detached?: boolean;
 }
 
 export function buildDockerArgs(input: BuildArgsInput): string[] {
-  const { request, options, containerName, volumeName, workdir } = input;
-  const args: string[] = ['run', '--rm', '-i', '--name', containerName];
+  const { request, options, containerName, volumeName, workdir, detached } = input;
+  const args: string[] = detached
+    ? ['run', '-d', '--name', containerName]
+    : ['run', '--rm', '-i', '--name', containerName];
 
   const noNewPrivileges = options.noNewPrivileges ?? true;
   if (noNewPrivileges) args.push('--security-opt', 'no-new-privileges');

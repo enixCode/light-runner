@@ -1,7 +1,19 @@
+import os from 'node:os';
+import path from 'node:path';
+
 export const ISOLATED_NETWORK = 'light-runner-isolated';
 export const SEEDER_IMAGE = 'alpine:3.19';
 export const DEFAULT_WORKDIR = '/app';
 export const VOLUME_PREFIX = 'light-runner-';
+
+// Where detached runs persist their state. One JSON file per run id, readable
+// across host process restarts so a future DockerRunner.attach(id) can pick
+// back up where we left off. Read at call time so LIGHT_RUNNER_STATE_DIR can
+// be overridden per-test even in a shared Node process.
+export function stateDir(): string {
+  return process.env.LIGHT_RUNNER_STATE_DIR
+    ?? path.join(os.homedir(), '.light-runner', 'state');
+}
 export const DEFAULT_PIDS_LIMIT = 100;
 export const DEFAULT_TIMEOUT_MS = 20 * 60 * 1000;
 // Hard cap on per-container RAM. Without this, a single run can eat all host

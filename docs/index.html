@@ -538,7 +538,7 @@
     color: var(--paper);
     margin-bottom: 18px;
   }
-  .eco-card h4 {
+  .eco-card h3 {
     font-family: 'Fraunces', serif;
     font-weight: 400;
     font-size: 20px;
@@ -651,6 +651,7 @@
         <a href="#quick-start">Quick start</a>
         <a href="#security">Security</a>
         <a href="#ecosystem">Ecosystem</a>
+        <a href="./api/">Documentation</a>
         <a href="https://github.com/enixCode/light-runner" class="primary">GitHub -&gt;</a>
       </nav>
     </div>
@@ -671,7 +672,7 @@
     <div class="hero-headline">
       <h1 class="display">
         Run untrusted code<br>
-        <span class="shy">in</span> <span class="accent">hardened</span> containers.<br>
+        <span class="shy">in</span> <span class="accent">hardened</span> containers.
       </h1>
 
       <p class="hero-lede">
@@ -704,17 +705,16 @@
       </div>
     </div>
 
-    <figure class="hero-banner">
-      <img src="banner.webp" alt="A single glowing sphere floating above a wireframe cube on an isolated dark grid - the visual metaphor for a sandboxed container." />
-      <div class="corners" aria-hidden="true"></div>
-    </figure>
-
-    <div class="shell" style="padding:0">
-      <div class="hero-banner-caption">
+    <figure class="hero-figure">
+      <div class="hero-banner">
+        <img src="banner.webp" alt="A single glowing sphere floating above a wireframe cube on an isolated dark grid - the visual metaphor for a sandboxed container." />
+        <div class="corners" aria-hidden="true"></div>
+      </div>
+      <figcaption class="hero-banner-caption">
         <span>Fig. 01 - One process, one cell, one grid.</span>
         <span>light-runner / visual</span>
-      </div>
-    </div>
+      </figcaption>
+    </figure>
   </div>
 </section>
 
@@ -855,21 +855,21 @@ result<span class="p">.</span>extracted   <span class="c">// [{ from, to, status
     <div class="eco">
       <article class="eco-card this">
         <div class="mono-name">light-runner</div>
-        <h4>Spawn one container, return exit code and files.</h4>
+        <h3>Spawn one container, return exit code and files.</h3>
         <p>The execution primitive. Domain-agnostic. Zero orchestration. The other two tools in this family both call down to this one.</p>
         <div class="status">Stable - v0.8.0</div>
       </article>
 
       <article class="eco-card">
         <div class="mono-name">light-run</div>
-        <h4>CLI and HTTP surface around light-runner.</h4>
+        <h3>CLI and HTTP surface around light-runner.</h3>
         <p>Point a POST endpoint at it, pipe bodies through, get results back. Stateless wrapper, same defaults, same guarantees.</p>
         <div class="status">Planned</div>
       </article>
 
       <article class="eco-card">
         <div class="mono-name">light-process</div>
-        <h4>DAG orchestration, retries, fan-out.</h4>
+        <h3>DAG orchestration, retries, fan-out.</h3>
         <p>When one container is not enough. Composes runs into pipelines with backoff, concurrency limits, and structured outputs.</p>
         <div class="status">Planned</div>
       </article>
