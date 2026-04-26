@@ -44,7 +44,7 @@
     "runner",
     "isolation"
   ],
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "repository": "github:enixCode/light-runner",
   "devDependencies": {
     "@types/dockerode": "^4.0.1",
