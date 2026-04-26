@@ -3,14 +3,8 @@ import path from 'node:path';
 import { stateDir } from './constants.js';
 import type { ExtractSpec } from './types.js';
 
-/*
- * Per-run state persisted to disk so that detached runs can be resumed across
- * host process restarts. One JSON file per run id under `stateDir()`.
- *
- * Intentionally minimal: no schema version yet, no migrations. When we extend
- * this for pause/resume in a future phase, we can add a `version` field and
- * a read-time upgrader.
- */
+// One JSON file per run id under stateDir(): lets detached runs be resumed
+// across host process restarts.
 export interface RunState {
   id: string;
   container: string;
@@ -43,11 +37,7 @@ function filePath(id: string): string {
 
 export function writeState(state: RunState): void {
   ensureDir();
-  /*
-   * Atomic write: write to a temp file and rename. Protects against partial
-   * writes if the host is killed mid-write (tearing). Node's fs.renameSync is
-   * atomic on the same filesystem (which the state dir always is).
-   */
+  // Atomic via temp + rename: avoids torn files if the host dies mid-write.
   const tmp = `${filePath(state.id)}.tmp`;
   fs.writeFileSync(tmp, JSON.stringify(state, null, 2), 'utf8');
   fs.renameSync(tmp, filePath(state.id));

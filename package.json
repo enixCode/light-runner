@@ -47,11 +47,13 @@
   "license": "AGPL-3.0",
   "repository": "github:enixCode/light-runner",
   "devDependencies": {
+    "@types/dockerode": "^4.0.1",
     "@types/node": "^25.6.0",
     "typedoc": "^0.28.19",
     "typescript": "^6.0.3"
   },
   "dependencies": {
+    "dockerode": "^5.0.0",
     "tar": "^7.5.13"
   }
 }

@@ -1,25 +1,37 @@
 import { randomUUID } from 'node:crypto';
-import { spawn, spawnSync } from 'node:child_process';
-import { buildDockerArgs } from './args.js';
-import { Execution } from './Execution.js';
+import { PassThrough } from 'node:stream';
+import type { Duplex } from 'node:stream';
+import type Dockerode from 'dockerode';
 import {
-  CONTAINER_NAME_REGEX,
   DEFAULT_TIMEOUT_MS,
   DEFAULT_WORKDIR,
   ISOLATED_NETWORK,
-  MAX_CONTAINER_NAME_LENGTH,
+  RUN_ID_LABEL,
   VOLUME_PREFIX,
+  reapAgeMs,
 } from './constants.js';
+import { buildContainerCreateOptions } from './createOptions.js';
+import { docker, pingDaemon } from './docker.js';
+import { LightRunnerError } from './errors.js';
+import { Execution } from './Execution.js';
 import { listStates, readState, updateState, writeState } from './state.js';
 import type { RunState } from './state.js';
-import {
-  cleanupOrphanVolumes,
-  createVolume,
-  destroyVolume,
-  extractFromVolume,
-  seedVolume,
-} from './volume.js';
+import { cleanupOrphanVolumes, createVolume, destroyVolume } from './volume/index.js';
+import { seedVolume } from './volume/seed.js';
+import { extractFromVolume } from './volume/extract.js';
 import type { ExtractResult, RunnerOptions, RunRequest, RunResult } from './types.js';
+
+interface ExecuteCtx {
+  request: RunRequest;
+  /*
+   * Shared name for the per-run container and volume. The library names both
+   * after `${VOLUME_PREFIX}<shortId>` so reapOrphans + cleanupOrphanVolumes
+   * can find them with the same prefix scan.
+   */
+  name: string;
+  workdir: string;
+  network: string | undefined;
+}
 
 export class DockerRunner {
   private readonly options: RunnerOptions;
@@ -28,157 +40,136 @@ export class DockerRunner {
     this.options = options;
   }
 
+  /*
+   * Synchronous handle, asynchronous result. We do not pre-flight the daemon
+   * here because the call must stay sync - the ping happens at the start of
+   * the inner async work and any DOCKER_UNREACHABLE error reaches the
+   * caller via `execution.result`.
+   */
   run(request: RunRequest): Execution {
     const workdir = request.workdir ?? DEFAULT_WORKDIR;
     validateRequest(request);
 
     const execId = randomUUID();
-    const shortId = execId.slice(0, 12);
-    const containerName = truncateName(`${VOLUME_PREFIX}${shortId}`);
-    const volumeName = containerName;
-    const network = request.network;
+    const name = `${VOLUME_PREFIX}${execId.slice(0, 12)}`;
 
-    if (request.detached) {
-      return this.runDetached({ request, containerName, volumeName, workdir, network });
-    }
-
-    const state = { cancelled: false, child: null as ReturnType<typeof spawn> | null };
-
-    const result = this.execute({
+    const ctx: ExecuteCtx = {
       request,
-      containerName,
-      volumeName,
+      name,
       workdir,
-      network,
-      state,
-    });
+      network: request.network,
+    };
 
-    const execution = new Execution(containerName, result, () => {
+    const state: RunState_ = { cancelled: false, container: null };
+    const result = request.detached
+      ? this.executeDetached(ctx, state)
+      : this.execute(ctx, state);
+
+    const execution = new Execution(name, result, () => {
       state.cancelled = true;
-      state.child?.kill('SIGKILL');
+      // Best-effort kill: the container may not exist yet (still creating)
+      // or may already be gone. Fire-and-forget either way. For detached
+      // runs the local `state.container` reference may be missing (state
+      // file lives across processes), so we look up by name as a fallback.
+      const target = state.container ?? docker.getContainer(name);
+      target.kill().catch(() => { /* swallow */ });
     });
 
     if (request.signal) {
-      if (request.signal.aborted) {
-        execution.cancel();
-      } else {
-        request.signal.addEventListener('abort', () => execution.cancel(), { once: true });
-      }
+      if (request.signal.aborted) execution.cancel();
+      else request.signal.addEventListener('abort', () => execution.cancel(), { once: true });
     }
 
     return execution;
   }
 
-  private runDetached(ctx: {
-    request: RunRequest;
-    containerName: string;
-    volumeName: string;
-    workdir: string;
-    network: string | undefined;
-  }): Execution {
-    const { request, containerName, volumeName, workdir, network } = ctx;
-    const state = { cancelled: false };
+  private async execute(ctx: ExecuteCtx, state: RunState_): Promise<RunResult> {
+    const { request, name, workdir } = ctx;
+    const started = Date.now();
 
-    const result = this.executeDetached({
-      request,
-      containerName,
-      volumeName,
-      workdir,
-      network,
-      state,
-    });
+    let volumeCreated = false;
+    try {
+      await this.setupContainer(ctx, state, false);
+      volumeCreated = true;
 
-    const execution = new Execution(containerName, result, () => {
-      state.cancelled = true;
-      // No local child process to kill - the container runs independently.
-      // We stop it via the docker daemon, and docker wait (in executeDetached)
-      // will return as soon as the container exits.
-      spawnSync('docker', ['kill', containerName], { stdio: 'ignore' });
-    });
+      const inner = await runContainer(state.container!, request, state);
 
-    if (request.signal) {
-      if (request.signal.aborted) {
-        execution.cancel();
-      } else {
-        request.signal.addEventListener('abort', () => execution.cancel(), { once: true });
+      let extracted: ExtractResult[] | undefined;
+      if (request.extract?.length && inner.exitCode === 0 && !state.cancelled) {
+        extracted = await extractFromVolume(name, workdir, request.extract);
       }
-    }
 
-    return execution;
+      const duration = Date.now() - started;
+      const success = inner.exitCode === 0 && !state.cancelled && !inner.timedOut;
+
+      return {
+        success,
+        exitCode: inner.exitCode,
+        duration,
+        cancelled: state.cancelled,
+        ...(extracted ? { extracted } : {}),
+      };
+    } finally {
+      if (volumeCreated) await destroyVolume(name);
+    }
   }
 
-  private async executeDetached(ctx: {
-    request: RunRequest;
-    containerName: string;
-    volumeName: string;
-    workdir: string;
-    network: string | undefined;
-    state: { cancelled: boolean };
-  }): Promise<RunResult> {
-    const { request, containerName, volumeName, workdir, network, state } = ctx;
+  private async executeDetached(ctx: ExecuteCtx, state: RunState_): Promise<RunResult> {
+    const { request, name, workdir } = ctx;
     const started = Date.now();
     const startedAt = new Date(started).toISOString();
 
     let volumeCreated = false;
     let containerStarted = false;
 
+    // Persist the state file BEFORE setupContainer + start so a caller that
+    // re-enters with `DockerRunner.attach(execution.id)` immediately after
+    // `runner.run({ detached: true })` finds a state to attach to. Without
+    // this, the file appears only after the async setup completes and a fast
+    // re-attach races to null.
+    writeState({
+      id: name,
+      container: name,
+      volume: name,
+      image: request.image,
+      workdir,
+      command: request.command,
+      timeout: request.timeout,
+      extract: request.extract,
+      startedAt,
+      status: 'running',
+    });
+
     try {
-      createVolume(volumeName);
+      await this.setupContainer(ctx, state, true);
       volumeCreated = true;
 
-      await seedVolume(volumeName, {
-        dir: request.dir,
-        workdir,
-      });
-
-      if (network === undefined || network === '') {
-        ensureIsolatedNetwork();
-      }
-
-      const args = buildDockerArgs({
-        request,
-        options: this.options,
-        containerName,
-        volumeName,
-        workdir,
-        detached: true,
-      });
-
-      // Start the container in the background. This returns immediately with
-      // the container ID on stdout, which we ignore (we already know the name).
-      const spawnResult = spawnSync('docker', args, { encoding: 'utf8' });
-      if (spawnResult.status !== 0) {
-        throw new Error(`docker run -d failed: ${spawnResult.stderr || spawnResult.stdout}`);
+      try {
+        await state.container!.start();
+      } catch (err) {
+        throw new LightRunnerError({
+          code: 'CONTAINER_START_FAILED',
+          message: `detached start failed: ${(err as Error).message}`,
+          dockerOp: 'start',
+          containerId: name,
+          cause: err,
+        });
       }
       containerStarted = true;
 
-      // Persist before awaiting exit so a crash during the run leaves a
-      // reconstructable state file.
-      writeState({
-        id: containerName,
-        container: containerName,
-        volume: volumeName,
-        image: request.image,
-        workdir,
-        command: request.command,
-        timeout: request.timeout,
-        extract: request.extract,
-        startedAt,
-        status: 'running',
-      });
-
-      const exitCode = await waitForContainer(containerName);
+      const wait = (await state.container!.wait()) as { StatusCode: number };
+      const exitCode = wait.StatusCode;
       const finishedAt = new Date().toISOString();
       const durationMs = Date.now() - started;
 
       let extracted: ExtractResult[] | undefined;
       if (request.extract?.length && exitCode === 0 && !state.cancelled) {
-        extracted = await extractFromVolume(volumeName, workdir, request.extract);
+        extracted = await extractFromVolume(name, workdir, request.extract);
       }
 
       const success = exitCode === 0 && !state.cancelled;
 
-      updateState(containerName, {
+      updateState(name, {
         status: state.cancelled ? 'cancelled' : 'exited',
         cancelled: state.cancelled,
         exitCode,
@@ -194,132 +185,116 @@ export class DockerRunner {
         ...(extracted ? { extracted } : {}),
       };
     } catch (err) {
-      updateState(containerName, {
+      updateState(name, {
         status: 'failed',
         finishedAt: new Date().toISOString(),
       });
       throw err;
     } finally {
       if (containerStarted) {
-        // `docker run -d` without --rm leaves the exited container around so
-        // that `docker wait` can be called. Clean it up now.
-        spawnSync('docker', ['rm', '-f', containerName], { stdio: 'ignore' });
+        // Detached runs disable AutoRemove (so wait() can read the exit
+        // code), so the container survives until we explicitly remove it.
+        await docker.getContainer(name).remove({ force: true }).catch(() => { /* swallow */ });
       }
-      if (volumeCreated) destroyVolume(volumeName);
+      if (volumeCreated) await destroyVolume(name);
     }
   }
 
-  private async execute(ctx: {
-    request: RunRequest;
-    containerName: string;
-    volumeName: string;
-    workdir: string;
-    network: string | undefined;
-    state: { cancelled: boolean; child: ReturnType<typeof spawn> | null };
-  }): Promise<RunResult> {
-    const { request, containerName, volumeName, workdir, network, state } = ctx;
-    const started = Date.now();
+  private async setupContainer(ctx: ExecuteCtx, state: RunState_, detached: boolean): Promise<void> {
+    const { request, name, workdir, network } = ctx;
 
-    let volumeCreated = false;
+    await pingDaemon();
+    await createVolume(name, name);
+    await seedVolume(name, { dir: request.dir, workdir });
+    if (network === undefined || network === '') await ensureIsolatedNetwork();
+
+    const createOpts = buildContainerCreateOptions({
+      request,
+      options: this.options,
+      containerName: name,
+      volumeName: name,
+      workdir,
+      runId: name,
+      detached,
+    });
+
     try {
-      createVolume(volumeName);
-      volumeCreated = true;
-
-      await seedVolume(volumeName, {
-        dir: request.dir,
-        workdir,
+      state.container = await docker.createContainer(createOpts);
+    } catch (err) {
+      throw new LightRunnerError({
+        code: 'CONTAINER_START_FAILED',
+        message: `createContainer failed: ${(err as Error).message}`,
+        dockerOp: 'createContainer',
+        containerId: name,
+        cause: err,
       });
-
-      if (network === undefined || network === '') {
-        ensureIsolatedNetwork();
-      }
-
-      const args = buildDockerArgs({
-        request,
-        options: this.options,
-        containerName,
-        volumeName,
-        workdir,
-      });
-
-      const runResult = await runContainer(args, request, state);
-
-      let extracted: ExtractResult[] | undefined;
-      if (request.extract?.length && runResult.exitCode === 0 && !state.cancelled) {
-        extracted = await extractFromVolume(volumeName, workdir, request.extract);
-      }
-
-      const duration = Date.now() - started;
-      const success = runResult.exitCode === 0 && !state.cancelled && !runResult.timedOut;
-
-      return {
-        success,
-        exitCode: runResult.exitCode,
-        duration,
-        cancelled: state.cancelled,
-        ...(extracted ? { extracted } : {}),
-      };
-    } finally {
-      if (volumeCreated) destroyVolume(volumeName);
     }
   }
 
-  static isAvailable(): boolean {
-    const r = spawnSync('docker', ['--version'], { stdio: 'ignore' });
-    return r.status === 0;
+  static async isAvailable(): Promise<boolean> {
+    try {
+      await pingDaemon(2_000);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
-  static cleanupOrphanVolumes(): number {
+  static async cleanupOrphanVolumes(): Promise<number> {
     return cleanupOrphanVolumes();
   }
 
   /*
-   * Re-attach to a previously-started detached run by its id. Returns an
+   * Re-attach to a previously-started detached run by id. Returns an
    * Execution whose `.result` resolves the same way as the original call did,
    * or null if no state file exists for that id.
-   *
-   * Terminal states (exited / cancelled / failed) resolve immediately from
-   * the persisted data. Running state triggers a fresh `docker wait` so the
-   * new host can pick up where the previous one left off.
    */
   static attach(id: string): Execution | null {
     const state = readState(id);
     if (!state) return null;
 
     if (state.status !== 'running') {
-      // Already terminal. Build a resolved Execution from the state file.
+      // Already terminal: build a resolved Execution from the state file.
       const resolved: RunResult = {
         success: state.status === 'exited' && !state.cancelled && state.exitCode === 0,
         exitCode: state.exitCode ?? -1,
         duration: state.durationMs ?? 0,
         cancelled: state.cancelled === true,
       };
-      return new Execution(id, Promise.resolve(resolved), () => {
-        /* no-op: the container is already gone */
-      });
+      return new Execution(id, Promise.resolve(resolved), () => { /* no-op */ });
     }
 
-    // Running. Check the container still exists before waiting.
-    const exists = containerExists(state.container);
-    if (!exists) {
-      // Ghost state: state says running but docker lost track. Mark it.
-      updateState(id, {
-        status: 'failed',
-        finishedAt: new Date().toISOString(),
-      });
-      return new Execution(id, Promise.resolve({
-        success: false,
-        exitCode: -1,
-        duration: 0,
-        cancelled: false,
-      }), () => { /* no-op */ });
-    }
-
-    const cancelState = { cancelled: false };
+    // Running. Check the container still exists before waiting - a state
+    // file claiming `running` plus a missing container is a ghost we mark
+    // as failed immediately.
+    const cancelState: RunState_ = { cancelled: false, container: null };
     const started = Date.parse(state.startedAt);
+
     const result = (async (): Promise<RunResult> => {
+      // The state file is written synchronously by run() before the async
+      // setup creates the container, so a fast re-attach can land in the
+      // gap. Poll briefly to absorb that race instead of declaring failure.
+      const exists = await waitForContainer(state.container, 3_000);
+      if (!exists) {
+        updateState(id, {
+          status: 'failed',
+          finishedAt: new Date().toISOString(),
+        });
+        return { success: false, exitCode: -1, duration: 0, cancelled: false };
+      }
+
       try {
-        const exitCode = await waitForContainer(state.container);
+        const container = docker.getContainer(state.container);
+        cancelState.container = container;
+
+        // condition: 'next-exit' is required because attach() can land while
+        // the container is still in 'created' state (state file is written
+        // sync in run() before the async start completes). The default
+        // 'not-running' condition is satisfied by 'created' too, so wait()
+        // would return StatusCode 0 immediately, then our finally would
+        // force-remove the container under the launcher's feet.
+        const wait = (await container.wait({ condition: 'next-exit' })) as { StatusCode: number };
+        const exitCode = wait.StatusCode;
         const finishedAt = new Date().toISOString();
         const durationMs = Date.now() - (Number.isFinite(started) ? started : Date.now());
 
@@ -344,41 +319,35 @@ export class DockerRunner {
           ...(extracted ? { extracted } : {}),
         };
       } finally {
-        // Best-effort cleanup - the original run's finally block may already
-        // have removed the container if it ran on the same host.
-        spawnSync('docker', ['rm', '-f', state.container], { stdio: 'ignore' });
-        destroyVolume(state.volume);
+        // Best-effort cleanup. The original run may have removed the
+        // container already; ignore conflicts.
+        await docker.getContainer(state.container).remove({ force: true }).catch(() => {});
+        await destroyVolume(state.volume);
       }
     })();
 
     return new Execution(id, result, () => {
       cancelState.cancelled = true;
-      spawnSync('docker', ['kill', state.container], { stdio: 'ignore' });
+      docker.getContainer(state.container).kill().catch(() => { /* swallow */ });
     });
   }
 
-  /*
-   * Enumerate all known runs (active + terminal) from the state dir.
-   * Identical to `listStates()` - kept as a static on DockerRunner for
-   * discoverability and future extension (e.g. filter by status).
-   */
   static list(): RunState[] {
     return listStates();
   }
 
   /*
    * Reconcile state files with the docker daemon. For every state marked
-   * `running`, check whether the container still exists. If not, mark it
-   * as `failed` (ghost state). Returns the number of states updated.
-   *
-   * Should be called on host startup before accepting new work.
+   * `running`, check the container exists. If not, mark it `failed`. Returns
+   * the number of states updated. Should be called on host startup before
+   * accepting new work.
    */
-  static cleanupOrphanStates(): number {
+  static async cleanupOrphanStates(): Promise<number> {
     const states = listStates();
     let fixed = 0;
     for (const s of states) {
       if (s.status !== 'running') continue;
-      if (containerExists(s.container)) continue;
+      if (await containerExists(s.container)) continue;
       updateState(s.id, {
         status: 'failed',
         finishedAt: new Date().toISOString(),
@@ -387,6 +356,62 @@ export class DockerRunner {
     }
     return fixed;
   }
+
+  /*
+   * Sweep stale containers + volumes left behind by crashed hosts. We only
+   * touch resources stamped with our `RUN_ID_LABEL`, so this is safe to run
+   * on shared docker hosts that also serve unrelated workloads. Containers
+   * are reaped once they stop running for `reapAgeMs()` ms; volumes are
+   * removed without `force` so still-mounted ones survive.
+   */
+  static async reapOrphans(): Promise<{ containers: number; volumes: number }> {
+    const ageMs = reapAgeMs();
+    const cutoff = Date.now() - ageMs;
+    let containers = 0;
+    let volumes = 0;
+
+    try {
+      const list = await docker.listContainers({
+        all: true,
+        filters: { label: [RUN_ID_LABEL] },
+      });
+      for (const c of list) {
+        // c.Created is unix epoch seconds. Reap only containers that are
+        // not currently running and whose creation predates the cutoff.
+        const reapableState = c.State === 'created' || c.State === 'exited' || c.State === 'dead';
+        if (!reapableState) continue;
+        if (c.Created * 1000 > cutoff) continue;
+        try {
+          await docker.getContainer(c.Id).remove({ force: true });
+          containers += 1;
+        } catch { /* swallow */ }
+      }
+    } catch { /* swallow */ }
+
+    try {
+      const vlist = await docker.listVolumes({ filters: { label: [RUN_ID_LABEL] } });
+      for (const v of vlist.Volumes ?? []) {
+        try {
+          // No `force`: still-mounted volumes (active runs) error out and
+          // we leave them alone. Reapable ones get removed.
+          await docker.getVolume(v.Name).remove();
+          volumes += 1;
+        } catch { /* swallow */ }
+      }
+    } catch { /* swallow */ }
+
+    return { containers, volumes };
+  }
+}
+
+/*
+ * Carries cancellation state + the live Container reference so the cancel
+ * hook in Execution can kill the right container without going through the
+ * docker daemon by name first.
+ */
+interface RunState_ {
+  cancelled: boolean;
+  container: Dockerode.Container | null;
 }
 
 interface InternalRunResult {
@@ -394,64 +419,104 @@ interface InternalRunResult {
   timedOut: boolean;
 }
 
-function runContainer(
-  args: string[],
+/*
+ * Attach to the container's stdio, start it, pipe `request.input` (if any)
+ * to stdin, stream stdout/stderr to `request.onLog`, then wait for exit.
+ * Honors `request.timeout` (SIGKILL fallback) and `state.cancelled`
+ * (cooperative shutdown via Execution.cancel).
+ */
+async function runContainer(
+  container: Dockerode.Container,
   request: RunRequest,
-  state: { cancelled: boolean; child: ReturnType<typeof spawn> | null },
+  state: RunState_,
 ): Promise<InternalRunResult> {
-  return new Promise((resolve, reject) => {
-    const child = spawn('docker', args, { stdio: ['pipe', 'pipe', 'pipe'] });
-    state.child = child;
+  const wantsStdin = request.input !== undefined;
 
-    let timedOut = false;
+  const stream = (await container.attach({
+    stream: true,
+    stdin: wantsStdin,
+    stdout: true,
+    stderr: true,
+    hijack: wantsStdin,
+  })) as Duplex;
 
-    const onChunk = (chunk: Buffer) => {
-      if (!request.onLog) return;
-      emitLines(chunk.toString('utf8'), request.onLog);
-    };
-    child.stdout.on('data', onChunk);
-    child.stderr.on('data', onChunk);
+  const stdout = new PassThrough();
+  const stderr = new PassThrough();
 
+  if (request.onLog) {
+    let stdoutBuf = '';
+    let stderrBuf = '';
+    stdout.on('data', (b: Buffer) => {
+      stdoutBuf += b.toString('utf8');
+      stdoutBuf = drainLines(stdoutBuf, request.onLog!);
+    });
+    stderr.on('data', (b: Buffer) => {
+      stderrBuf += b.toString('utf8');
+      stderrBuf = drainLines(stderrBuf, request.onLog!);
+    });
+  } else {
+    // Drain even if unread, otherwise the container blocks on a full pipe.
+    stdout.on('data', () => { /* drop */ });
+    stderr.on('data', () => { /* drop */ });
+  }
+
+  container.modem.demuxStream(stream, stdout, stderr);
+
+  await container.start();
+
+  if (wantsStdin) {
     try {
-      if (request.input !== undefined) {
-        child.stdin.write(JSON.stringify(request.input));
-      }
-      child.stdin.end();
-    } catch {
-      // stdin may close early - ignore
-    }
+      stream.write(JSON.stringify(request.input));
+      stream.end();
+    } catch { /* stdin may close early */ }
+  }
 
-    const timeout = request.timeout ?? DEFAULT_TIMEOUT_MS;
-    const timer = timeout > 0
-      ? setTimeout(() => {
-          timedOut = true;
-          child.kill('SIGKILL');
-        }, timeout)
-      : null;
+  let timedOut = false;
+  const timeoutMs = request.timeout ?? DEFAULT_TIMEOUT_MS;
+  const timer = timeoutMs > 0
+    ? setTimeout(() => {
+        timedOut = true;
+        container.kill().catch(() => { /* swallow */ });
+      }, timeoutMs)
+    : null;
 
-    child.on('error', (err) => {
-      if (timer) clearTimeout(timer);
-      reject(err);
-    });
-
-    child.on('close', (code) => {
-      if (timer) clearTimeout(timer);
-      resolve({
-        exitCode: code ?? -1,
-        timedOut,
-      });
-    });
-  });
+  try {
+    const wait = (await container.wait()) as { StatusCode: number };
+    return { exitCode: wait.StatusCode, timedOut };
+  } catch {
+    // wait can 404 if AutoRemove tore the container down before we asked.
+    return { exitCode: -1, timedOut };
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
-function ensureIsolatedNetwork(): void {
-  const inspect = spawnSync('docker', ['network', 'inspect', ISOLATED_NETWORK], { stdio: 'ignore' });
-  if (inspect.status === 0) return;
-  spawnSync(
-    'docker',
-    ['network', 'create', '--driver', 'bridge', '--opt', 'com.docker.network.bridge.enable_icc=false', ISOLATED_NETWORK],
-    { stdio: 'ignore' },
-  );
+function drainLines(buf: string, onLog: (line: string) => void): string {
+  let i: number;
+  while ((i = buf.indexOf('\n')) !== -1) {
+    const line = buf.slice(0, i);
+    if (line.length > 0) onLog(line);
+    buf = buf.slice(i + 1);
+  }
+  return buf;
+}
+
+async function ensureIsolatedNetwork(): Promise<void> {
+  try {
+    await docker.getNetwork(ISOLATED_NETWORK).inspect();
+    return;
+  } catch {
+    // Not found - create it.
+  }
+  try {
+    await docker.createNetwork({
+      Name: ISOLATED_NETWORK,
+      Driver: 'bridge',
+      Options: { 'com.docker.network.bridge.enable_icc': 'false' },
+    });
+  } catch {
+    // Race with another concurrent runner is fine; first creator wins.
+  }
 }
 
 function validateRequest(request: RunRequest): void {
@@ -460,10 +525,10 @@ function validateRequest(request: RunRequest): void {
   }
   if (request.detached) {
     /*
-     * Detached contract: stdin can't survive a host process death, so we make
-     * the constraint explicit at the API rather than silently dropping input.
-     * The runner can't stream `onLog` either, but that only costs logs and
-     * does not change correctness, so we warn-by-convention in the type docs.
+     * Detached contract: stdin can not survive a host process death, so we
+     * make the constraint explicit at the API rather than silently dropping
+     * input. The runner can not stream `onLog` either, but that only costs
+     * logs and does not change correctness.
      */
     if (request.input !== undefined) {
       throw new Error('RunRequest.input is not supported with detached: true');
@@ -471,47 +536,27 @@ function validateRequest(request: RunRequest): void {
   }
 }
 
-function containerExists(containerName: string): boolean {
-  const r = spawnSync('docker', ['inspect', '--type=container', containerName], {
-    stdio: 'ignore',
-  });
-  return r.status === 0;
-}
-
-function waitForContainer(containerName: string): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const child = spawn('docker', ['wait', containerName], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let stdout = '';
-    let stderr = '';
-    child.stdout.on('data', (d: Buffer) => { stdout += d.toString('utf8'); });
-    child.stderr.on('data', (d: Buffer) => { stderr += d.toString('utf8'); });
-    child.on('error', reject);
-    child.on('close', (code) => {
-      if (code !== 0) {
-        reject(new Error(`docker wait exited with code ${code}: ${stderr.trim()}`));
-        return;
-      }
-      const parsed = parseInt(stdout.trim(), 10);
-      if (Number.isNaN(parsed)) {
-        reject(new Error(`docker wait returned non-numeric output: ${stdout.trim()}`));
-        return;
-      }
-      resolve(parsed);
-    });
-  });
-}
-
-function truncateName(name: string): string {
-  const cleaned = name.replace(/[^a-zA-Z0-9_.-]/g, '-');
-  const truncated = cleaned.slice(0, MAX_CONTAINER_NAME_LENGTH);
-  if (!CONTAINER_NAME_REGEX.test(truncated)) {
-    return `${VOLUME_PREFIX}${Date.now()}`;
-  }
-  return truncated;
-}
-
-function emitLines(text: string, onLog: (line: string) => void): void {
-  for (const line of text.split('\n')) {
-    if (line.length > 0) onLog(line);
+async function containerExists(containerName: string): Promise<boolean> {
+  try {
+    await docker.getContainer(containerName).inspect();
+    return true;
+  } catch {
+    return false;
   }
 }
+
+/*
+ * Poll for a container to appear in docker. Used by `attach()` to bridge the
+ * window between the state file being written (sync, in `run()`) and the
+ * container being created (async, in `executeDetached`). Returns true as soon
+ * as the container shows up, false once the deadline is reached.
+ */
+async function waitForContainer(containerName: string, timeoutMs: number): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (await containerExists(containerName)) return true;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  return false;
+}
+

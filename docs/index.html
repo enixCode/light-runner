@@ -10,7 +10,10 @@
 
 <meta property="og:title" content="light-runner" />
 <meta property="og:description" content="Run untrusted code in hardened Docker containers from Node.js." />
-<meta property="og:image" content="banner.webp" />
+<meta property="og:image" content="https://enixcode.github.io/light-runner/banner.webp" />
+<meta property="og:url" content="https://enixcode.github.io/light-runner/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://enixcode.github.io/light-runner/banner.webp" />
 <meta property="og:type" content="website" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,7 +37,12 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
+  html {
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
   body {
     background: var(--ink);
     color: var(--paper);
@@ -45,27 +53,27 @@
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
     min-height: 100vh;
-    background-image:
-      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(127, 221, 255, 0.04), transparent 70%),
-      linear-gradient(var(--line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--line) 1px, transparent 1px);
-    background-size: 100% 100%, 80px 80px, 80px 80px;
-    background-position: 0 0, 0 0, 0 0;
-    background-attachment: fixed, fixed, fixed;
   }
 
   body::before {
     content: "";
     position: fixed;
     inset: 0;
+    z-index: 0;
     pointer-events: none;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-    opacity: 0.45;
-    mix-blend-mode: screen;
-    z-index: 1;
+    background-color: var(--ink);
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.04 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(127, 221, 255, 0.04), transparent 70%),
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 180px 180px, 100% 100%, 80px 80px, 80px 80px;
+    background-position: 0 0, 0 0, 0 0, 0 0;
+    transform: translateZ(0);
+    will-change: transform;
   }
 
-  main, header, footer { position: relative; z-index: 2; }
+  main, header, footer { position: relative; z-index: 1; }
 
   /* ---------- typography ---------- */
 
@@ -566,6 +574,8 @@
   }
   .eco-card.this .status::before { background: var(--halo); box-shadow: 0 0 10px var(--halo-soft); }
   .eco-card.this .status { color: var(--halo-soft); }
+  /* Eco-card version: hidden by default, surfaced once GitHub API resolves. */
+  .eco-card .status .status-version:not(:empty)::before { content: " - "; }
 
   /* ---------- footer ---------- */
 
@@ -644,7 +654,7 @@
       <a class="mark" href="#">
         <span class="mark-dot" aria-hidden="true"></span>
         <span>light-runner</span>
-        <em>v0.8.0</em>
+        <em data-gh-version></em>
       </a>
       <nav class="top-nav" aria-label="primary">
         <a href="#primitives">Primitives</a>
@@ -664,7 +674,7 @@
 <section class="hero">
   <div class="shell">
     <div class="hero-eyebrow">
-      <span class="v">v0.8.0</span>
+      <span class="v" data-gh-version></span>
       <span class="divider"></span>
       <span class="tag">Execution primitive - Node.js</span>
     </div>
@@ -684,19 +694,19 @@
       <div class="hero-meta">
         <div class="cell">
           <div class="k">Runtime</div>
-          <div class="v">Node <span class="sub">&gt;=20</span></div>
+          <div class="v">Node <span class="sub">&gt;=22</span></div>
         </div>
         <div class="cell">
-          <div class="k">Dependency</div>
-          <div class="v">1 <span class="sub">tar only</span></div>
+          <div class="k">Dependencies</div>
+          <div class="v">2 <span class="sub">dockerode + tar</span></div>
         </div>
         <div class="cell">
-          <div class="k">Tarball</div>
-          <div class="v">12.7 <span class="sub">kB</span></div>
+          <div class="k">Transport</div>
+          <div class="v">dockerode <span class="sub">no CLI</span></div>
         </div>
         <div class="cell">
           <div class="k">Tests</div>
-          <div class="v">49 / 49 <span class="sub">pass</span></div>
+          <div class="v">82 / 82 <span class="sub">pass</span></div>
         </div>
         <div class="cell">
           <div class="k">License</div>
@@ -839,7 +849,7 @@ result<span class="p">.</span>extracted   <span class="c">// [{ from, to, status
     </div>
 
     <div class="sec-note">
-      <strong>Does not cover -</strong> kernel exploits, <code>runc</code> CVEs, side-channel attacks. For genuinely hostile code, combine with <code>{ runtime: 'runsc' }</code>.
+      <strong>Does not cover -</strong> kernel exploits, <code>runc</code> CVEs, side-channel attacks. For genuinely hostile code, combine with <code>{ runtime: 'runsc' }</code> (gVisor) or <code>{ runtime: 'kata' }</code> (Kata Containers, VM-level isolation - <em>option exposed but not yet validated in our test matrix</em>).
     </div>
   </div>
 </section>
@@ -857,7 +867,7 @@ result<span class="p">.</span>extracted   <span class="c">// [{ from, to, status
         <div class="mono-name">light-runner</div>
         <h3>Spawn one container, return exit code and files.</h3>
         <p>The execution primitive. Domain-agnostic. Zero orchestration. The other two tools in this family both call down to this one.</p>
-        <div class="status">Stable - v0.8.0</div>
+        <div class="status">Stable<span class="status-version" data-gh-version></span></div>
       </article>
 
       <article class="eco-card">
@@ -886,6 +896,7 @@ result<span class="p">.</span>extracted   <span class="c">// [{ from, to, status
         One glowing node. One dark grid. The rest is up to the code inside.
       </div>
       <nav class="foot-links" aria-label="footer">
+        <a href="./api/">API</a>
         <a href="https://github.com/enixCode/light-runner">GitHub</a>
         <a href="https://www.npmjs.com/package/light-runner">npm</a>
         <a href="#security">Security</a>
@@ -913,6 +924,20 @@ result<span class="p">.</span>extracted   <span class="c">// [{ from, to, status
       } catch { btn.textContent = 'Select'; }
     });
   }
+
+  // Fetch latest GitHub release. On success, populate every [data-gh-version]
+  // node + add the " - " separator on the eco-card status. On failure, the
+  // empty defaults stay empty (no version displayed).
+  fetch('https://api.github.com/repos/enixCode/light-runner/releases/latest')
+    .then((r) => r.ok ? r.json() : null)
+    .then((data) => {
+      const tag = data && data.tag_name;
+      if (!tag) return;
+      document.querySelectorAll('[data-gh-version]').forEach((el) => {
+        el.textContent = tag.startsWith('v') ? tag : 'v' + tag;
+      });
+    })
+    .catch(() => { /* swallow - default empty state stays */ });
 </script>
 
 </body>

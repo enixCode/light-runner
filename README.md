@@ -10,6 +10,12 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/enixCode/light-runner/releases/latest"><img src="https://img.shields.io/github/v/release/enixCode/light-runner?label=release&color=2ea44f" alt="latest release" /></a>
+  <a href="https://www.npmjs.com/package/light-runner"><img src="https://img.shields.io/npm/v/light-runner?label=npm&color=cb3837" alt="npm version" /></a>
+  <a href="https://github.com/enixCode/light-runner/blob/main/LICENSE"><img src="https://img.shields.io/github/license/enixCode/light-runner" alt="license" /></a>
+</p>
+
+<p align="center">
   <a href="https://enixcode.github.io/light-runner/">Website</a> -
   <a href="#install">Install</a> -
   <a href="#quick-start">Quick start</a> -
@@ -144,17 +150,27 @@ A missing or errored entry never fails the run - the consumer inspects `result.e
 
 ## API
 
+> **v0.10 transport change.** Internals now talk to the daemon through
+> [`dockerode`](https://github.com/apocas/dockerode) instead of shelling out
+> to the `docker` CLI. Public behavior is unchanged for `run()` /
+> `Execution.result` / `extract`. **Breaking:** `DockerRunner.isAvailable`,
+> `DockerRunner.cleanupOrphanVolumes`, `DockerRunner.cleanupOrphanStates`,
+> `Execution.pause`, and `Execution.resume` are now **async**. New API:
+> `DockerRunner.reapOrphans()` (sweep label-tagged stale containers + volumes)
+> and a structured `LightRunnerError` class with `LightRunnerErrorCode`.
+
 ```ts
 class DockerRunner {
   constructor(options?: RunnerOptions);
   run(request: RunRequest): Execution;
-  static isAvailable(): boolean;
-  static cleanupOrphanVolumes(): number;
+  static isAvailable(): Promise<boolean>;
+  static cleanupOrphanVolumes(): Promise<number>;
 
   // experimental - see "Experimental features" section below
   static attach(id: string): Execution | null;
   static list(): RunState[];
-  static cleanupOrphanStates(): number;
+  static cleanupOrphanStates(): Promise<number>;
+  static reapOrphans(): Promise<{ containers: number; volumes: number }>;
 }
 
 class Execution {
@@ -165,8 +181,40 @@ class Execution {
 
   // experimental - see "Experimental features" section below
   stop(options?: { signal?: string; grace?: number }): Promise<void>;
-  pause(): void;
-  resume(): void;
+  pause(): Promise<void>;
+  resume(): Promise<void>;
+}
+
+class LightRunnerError extends Error {
+  readonly code: LightRunnerErrorCode;
+  readonly dockerOp?: string;
+  readonly containerId?: string;
+}
+
+type LightRunnerErrorCode =
+  | 'DOCKER_UNREACHABLE'
+  | 'VOLUME_CREATE_FAILED'
+  | 'CONTAINER_START_FAILED'
+  | 'SEED_FAILED'
+  | 'EXTRACT_FAILED';
+
+// Detached-run state inspection (read-only helpers around the state dir):
+function listStates(): RunState[];
+function readState(id: string): RunState | null;
+
+interface RunState {
+  id: string;
+  container: string;
+  volume: string;
+  image: string;
+  workdir: string;
+  command?: string;
+  startedAt: string;
+  finishedAt?: string;
+  status: 'running' | 'exited' | 'cancelled' | 'failed';
+  exitCode?: number;
+  durationMs?: number;
+  cancelled?: boolean;
 }
 ```
 
@@ -215,7 +263,24 @@ Full type signatures live in [src/types.ts](src/types.ts).
 | `cpus`              | `1`      | `--cpus` value (scheduler share)                |
 | `runtime`           | `runc`   | `runc` \| `runsc` (gVisor) \| `kata`            |
 | `gpus`              | -        | `'all' \| number \| string`, shell-safe checked |
-| `noNewPrivileges`   | `true`   | apply `--security-opt no-new-privileges`        |
+| `noNewPrivileges`   | `true`   | block setuid escalation inside the container    |
+
+---
+
+## Reliability
+
+Failures talk to you in a structured way, and stale resources do not pile up.
+
+- **Daemon pre-flight.** `pingDaemon()` runs before the first container spawn and races dockerode's `ping()` against a 5 s deadline (`DOCKER_PING_TIMEOUT_MS`). If the daemon is unreachable you get a `LightRunnerError` with code `DOCKER_UNREACHABLE` instead of an opaque socket error.
+- **Structured errors.** Internal docker calls that fail throw a `LightRunnerError` with one of five codes:
+  - `DOCKER_UNREACHABLE` - daemon ping or connect failed
+  - `VOLUME_CREATE_FAILED` - per-run volume could not be created
+  - `CONTAINER_START_FAILED` - container could not be created or started
+  - `SEED_FAILED` - host folder could not be streamed into the volume
+  - `EXTRACT_FAILED` - artefact streaming out of the container failed
+
+  Each error carries an optional `dockerOp` (which docker call was in flight) and `containerId` (when known) for log correlation.
+- **Orphan reaping.** `DockerRunner.reapOrphans()` lists every `light-runner-*` container and volume tagged with the library's label, then removes any that have been idle or exited longer than `LIGHT_RUNNER_REAP_AGE_MS` (default 5 min). Returns `{ containers, volumes }` counts. Safe to call from a cron, a process-shutdown hook, or a sibling watchdog.
 
 ---
 
@@ -224,7 +289,7 @@ Full type signatures live in [src/types.ts](src/types.ts).
 Defaults (always on - never opt-out):
 
 - **Capabilities dropped**: `NET_RAW`, `MKNOD`, `SYS_CHROOT`, `SETPCAP`, `SETFCAP`, `AUDIT_WRITE`
-- **`--security-opt no-new-privileges`** - no setuid escalation inside the container
+- **`no-new-privileges`** security option - no setuid escalation inside the container
 - **`--pids-limit 100`** - fork-bomb protection
 - **`--memory 512m` / `--cpus 1`** by default - cgroup-enforced, tunable via `RunnerOptions`
 - **Isolated bridge network** by default, with inter-container ICC disabled; `'none'` fully disconnects
@@ -232,7 +297,10 @@ Defaults (always on - never opt-out):
 - **Path traversal in `extract`** (`..`) is rejected before any container spawns
 - **Extract cap** - 1 GiB per entry, enforced container-side via `du -sb` and streaming byte-count
 
-**What this doesn't cover**: kernel exploits, `runc` CVEs, side-channel attacks. For genuinely hostile code, combine with the gVisor runtime.
+**What this doesn't cover**: kernel exploits, `runc` CVEs, side-channel attacks. For genuinely hostile code, combine with a stronger runtime:
+
+- **`{ runtime: 'runsc' }`** - gVisor, user-space syscall interception. Tested, recommended default for hostile workloads. ~10-30% I/O overhead.
+- **`{ runtime: 'kata' }`** - Kata Containers, full VM-level isolation. Option is plumbed through (passed straight to docker's `Runtime` host config) but **not yet validated in our test matrix** - if you run it in production, please open an issue with results.
 
 ### Secrets
 
@@ -282,16 +350,28 @@ light-runner/
     DockerRunner.ts    main class + execution orchestration
     Execution.ts       cancellable handle
     types.ts           RunRequest, RunResult, ExtractSpec, ...
-    args.ts            pure docker args builder
-    volume.ts          create / seed / extract / destroy
+    createOptions.ts   pure builder of dockerode ContainerCreateOptions
+    docker.ts          singleton dockerode + pingDaemon health check
+    errors.ts          LightRunnerError + structured error codes
+    volume/
+      index.ts         create / destroy / cleanup-orphans
+      seed.ts          seed dir into volume via tar stream
+      extract.ts       extract files out via tar with 1 GiB cap
+      seeder.ts        shared throwaway-alpine helpers
+    state.ts           state file persistence for detached runs
     constants.ts       caps, limits, names, regexes
   test/
     unit/
-      args.test.ts         (18 tests, pure)
+      createOptions.test.ts   (22 tests, pure)
+      state.test.ts           (8 tests, pure)
     e2e/                   (Docker required)
-      volume.test.ts
-      runner.test.ts       (lifecycle, cancel, timeout, adversarial)
-      realworld.test.ts    (real Python/Node code + artefact extract)
+      attach.test.ts          (re-attach to detached runs)
+      detached.test.ts        (detached lifecycle)
+      limits.test.ts          (memory / cpu / pids / extract caps)
+      realworld.test.ts       (image-pull + real workloads)
+      runner.test.ts          (lifecycle, cancel, timeout, adversarial)
+      stop-pause.test.ts      (stop / pause / resume)
+      volume.test.ts          (seed + extract round-trips)
   Dockerfile.test          test harness image
   docker-compose.test.yml  sibling-container test runner
   dist/                    compiled output (gitignored, npm-published)
@@ -310,7 +390,7 @@ npm run test:docker  # all, inside a disposable container (see below)
 
 ### Running the full suite in a container
 
-`npm run test:docker` uses [docker-compose.test.yml](docker-compose.test.yml) to spin up `node:22-alpine` + `docker-cli`, bind-mount the repo, and mount the host Docker socket. The test container talks to the host daemon; spawned containers land as **siblings** on the host, not nested (no Docker-in-Docker, no nested daemon).
+`npm run test:docker` uses [docker-compose.test.yml](docker-compose.test.yml) to spin up `node:22-alpine`, bind-mount the repo, and mount the host Docker socket. `dockerode` talks to the host daemon directly through the socket; spawned containers land as **siblings** on the host, not nested (no Docker-in-Docker, no nested daemon, no docker CLI required inside the test image).
 
 ```bash
 npm run test:docker
@@ -324,22 +404,12 @@ Prerequisites:
 
 ## Roadmap
 
-- **Detached / pause / resume**: survive host process restarts, reattach by id, pause + resume a running container.
 - **Folder `ignore` option**: extend the hardcoded excludes when seeding a directory.
 - **Override the 1 GiB extract cap** via `RunnerOptions.maxExtractBytes`.
 
+Detached runs, attach, stop, and pause/resume shipped in v0.9 and moved to dockerode in v0.10. See the API section above for the current surface.
+
 Roadmap items are not public API and are subject to change.
-
----
-
-## Publishing
-
-```bash
-npm version patch   # or minor / major
-npm publish         # prepublishOnly -> build
-```
-
-Only `dist/`, `README.md`, and `LICENSE` ship, per [.npmignore](.npmignore).
 
 ---
 

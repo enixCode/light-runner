@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process';
+import { docker } from './docker.js';
 import type { RunResult } from './types.js';
 
 export interface StopOptions {
@@ -27,15 +27,19 @@ export class Execution {
 
   private _onCancel: () => void;
 
+  /*
+   * Mark cancelled, run the local hook, fire-and-forget a docker kill.
+   * Stays sync to preserve the v0.9 API: callers expect cancel() to return
+   * immediately. The kill happens in the background; the result promise
+   * resolves once the container exits.
+   */
   cancel(): void {
     if (this._cancelled) return;
     this._cancelled = true;
     try {
       this._onCancel();
-    } catch {
-      // swallow - container may already be gone
-    }
-    spawnSync('docker', ['kill', this.id], { stdio: 'ignore' });
+    } catch { /* swallow */ }
+    docker.getContainer(this.id).kill().catch(() => { /* swallow */ });
   }
 
   get cancelled(): boolean {
@@ -46,10 +50,6 @@ export class Execution {
    * Graceful stop: deliver SIGTERM (or a custom signal), wait `grace` ms,
    * then SIGKILL if the container is still alive. Marks the execution as
    * cancelled. Safe to call on an already-stopped container (no-op).
-   *
-   * Docker maps signal names to POSIX numbers internally. Invalid signal
-   * names cause docker kill to exit non-zero, which we swallow; in that
-   * case the grace timer still fires and SIGKILL cleans up.
    */
   async stop(options: StopOptions = {}): Promise<void> {
     const signal = options.signal ?? 'SIGTERM';
@@ -58,54 +58,50 @@ export class Execution {
     if (this._cancelled) return;
     this._cancelled = true;
 
-    // Mark the runner-level state as cancelled too (relies on onCancel
-    // setting the shared flag - identical to cancel()).
     try {
       this._onCancel();
-    } catch {
-      // swallow
-    }
+    } catch { /* swallow */ }
 
-    // Send the first signal.
-    spawnSync('docker', ['kill', '-s', signal, this.id], { stdio: 'ignore' });
+    const container = docker.getContainer(this.id);
+
+    // An unknown signal returns 4xx; we swallow because the grace timer
+    // still fires SIGKILL below.
+    await container.kill({ signal }).catch(() => { /* swallow */ });
 
     if (grace <= 0) {
-      // Immediate SIGKILL.
-      spawnSync('docker', ['kill', this.id], { stdio: 'ignore' });
+      await container.kill().catch(() => { /* swallow */ });
       return;
     }
 
-    // Wait grace period, then force kill if still running.
     await new Promise((r) => setTimeout(r, grace));
-    const stillRunning = spawnSync('docker', ['inspect', '-f', '{{.State.Running}}', this.id], {
-      encoding: 'utf8',
-    });
-    if (stillRunning.status === 0 && stillRunning.stdout.trim() === 'true') {
-      spawnSync('docker', ['kill', this.id], { stdio: 'ignore' });
+
+    try {
+      const info = await container.inspect();
+      if (info.State?.Running) {
+        await container.kill().catch(() => { /* swallow */ });
+      }
+    } catch {
+      // inspect 404 = container already gone, nothing to kill
     }
   }
 
   /*
-   * Freeze the container at the cgroup level (docker pause). All processes
-   * inside are suspended - memory preserved, CPU stops. Resume with resume().
-   *
-   * Does not change the cancelled flag: a paused run can still complete
-   * normally after resume(). Throws if the container is not running.
+   * Freeze the container at the cgroup level. Memory preserved, CPU stops.
+   * Does not flip `cancelled`: a paused run can still complete after resume().
    */
-  pause(): void {
-    const r = spawnSync('docker', ['pause', this.id], { encoding: 'utf8' });
-    if (r.status !== 0) {
-      throw new Error(`docker pause failed: ${(r.stderr ?? '').trim() || 'unknown error'}`);
+  async pause(): Promise<void> {
+    try {
+      await docker.getContainer(this.id).pause();
+    } catch (err) {
+      throw new Error(`docker pause failed: ${(err as Error).message}`);
     }
   }
 
-  /*
-   * Reverse of pause(). Resumes a paused container.
-   */
-  resume(): void {
-    const r = spawnSync('docker', ['unpause', this.id], { encoding: 'utf8' });
-    if (r.status !== 0) {
-      throw new Error(`docker unpause failed: ${(r.stderr ?? '').trim() || 'unknown error'}`);
+  async resume(): Promise<void> {
+    try {
+      await docker.getContainer(this.id).unpause();
+    } catch (err) {
+      throw new Error(`docker unpause failed: ${(err as Error).message}`);
     }
   }
 }

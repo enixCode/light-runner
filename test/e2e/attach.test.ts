@@ -147,7 +147,7 @@ maybe('DockerRunner.cleanupOrphanStates', () => {
     for (const f of fs.readdirSync(stateDir)) fs.rmSync(path.join(stateDir, f), { force: true });
   });
 
-  it('marks running states with missing containers as failed', () => {
+  it('marks running states with missing containers as failed', async () => {
     writeState({
       id: 'orphan-state',
       container: 'light-runner-nope-nope-nope-12345',
@@ -167,7 +167,7 @@ maybe('DockerRunner.cleanupOrphanStates', () => {
       status: 'exited',
       exitCode: 0,
     });
-    const fixed = DockerRunner.cleanupOrphanStates();
+    const fixed = await DockerRunner.cleanupOrphanStates();
     assert.ok(fixed >= 1, 'expected at least one orphan fixed');
     assert.equal(readState('orphan-state')?.status, 'failed');
     // Terminal state should be untouched.

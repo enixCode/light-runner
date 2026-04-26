@@ -16,12 +16,11 @@
 # Why node:22-alpine: Node 22 is the first LTS with native glob support in
 # `node --test "<pattern>"`. Alpine keeps the image under 70 MB total.
 #
-# Why docker-cli: we only need the CLI to talk to the host daemon. No engine.
+# No docker-cli is installed: light-runner talks to the host daemon directly
+# through the bind-mounted socket via `dockerode`, no shell-out required.
 # =============================================================================
 
 FROM node:22-alpine
-
-RUN apk add --no-cache docker-cli
 
 WORKDIR /work
 

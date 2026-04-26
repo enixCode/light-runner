@@ -99,13 +99,13 @@ maybe('execution.pause / resume', () => {
     }
     assert.equal(inspect(exec.id, '.State.Status'), 'running', 'container should be running');
 
-    exec.pause();
+    await exec.pause();
     assert.equal(inspect(exec.id, '.State.Status'), 'paused', 'container should be paused');
 
     await new Promise((r) => setTimeout(r, 500));
     assert.equal(inspect(exec.id, '.State.Status'), 'paused', 'still paused after delay');
 
-    exec.resume();
+    await exec.resume();
     // Give docker a tick to transition back.
     await new Promise((r) => setTimeout(r, 200));
     assert.equal(inspect(exec.id, '.State.Status'), 'running', 'container should be running again');
@@ -129,8 +129,8 @@ maybe('execution.pause / resume', () => {
     });
     // Intentionally wait for the run to finish, then pause - container
     // has been removed by the finally block, so docker pause fails.
-    return exec.result.then(() => {
-      assert.throws(() => exec.pause(), /docker pause failed/);
+    return exec.result.then(async () => {
+      await assert.rejects(() => exec.pause(), /docker pause failed/);
     });
   });
 });

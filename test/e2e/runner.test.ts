@@ -21,8 +21,8 @@ maybe('DockerRunner.run', () => {
     fs.rmSync(seedDir, { recursive: true, force: true });
   });
 
-  it('isAvailable returns true when docker is installed', () => {
-    assert.equal(DockerRunner.isAvailable(), true);
+  it('isAvailable returns true when docker is installed', async () => {
+    assert.equal(await DockerRunner.isAvailable(), true);
   });
 
   it('runs a container and returns exit 0 success', async () => {

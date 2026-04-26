@@ -4,12 +4,9 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {
-  createVolume,
-  destroyVolume,
-  extractFromVolume,
-  seedVolume,
-} from '../../src/volume.js';
+import { createVolume, destroyVolume } from '../../src/volume/index.js';
+import { seedVolume } from '../../src/volume/seed.js';
+import { extractFromVolume } from '../../src/volume/extract.js';
 import { DEFAULT_WORKDIR } from '../../src/constants.js';
 
 const dockerAvailable = spawnSync('docker', ['--version'], { stdio: 'ignore' }).status === 0;
@@ -19,13 +16,13 @@ maybe('volume lifecycle', () => {
   const name = `light-runner-test-${Date.now().toString(36)}`;
   let tmpDir: string;
 
-  before(() => {
-    createVolume(name);
+  before(async () => {
+    await createVolume(name, name);
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'light-runner-vol-'));
   });
 
-  after(() => {
-    destroyVolume(name);
+  after(async () => {
+    await destroyVolume(name);
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
@@ -69,7 +66,7 @@ maybe('volume lifecycle', () => {
     fs.writeFileSync(path.join(seedDir, 'results', 'b.txt'), 'bbb');
 
     const exName = `light-runner-extest-${Date.now().toString(36)}`;
-    createVolume(exName);
+    await createVolume(exName, exName);
     try {
       await seedVolume(exName, { dir: seedDir, workdir: DEFAULT_WORKDIR });
       const out = fs.mkdtempSync(path.join(os.tmpdir(), 'light-runner-out-'));
@@ -95,14 +92,14 @@ maybe('volume lifecycle', () => {
         fs.rmSync(out, { recursive: true, force: true });
       }
     } finally {
-      destroyVolume(exName);
+      await destroyVolume(exName);
       fs.rmSync(seedDir, { recursive: true, force: true });
     }
   });
 
   it('rejects extract with path traversal', async () => {
     const exName = `light-runner-trav-${Date.now().toString(36)}`;
-    createVolume(exName);
+    await createVolume(exName, exName);
     try {
       await seedVolume(exName, { dir: undefined, workdir: DEFAULT_WORKDIR });
       const out = fs.mkdtempSync(path.join(os.tmpdir(), 'light-runner-trav-'));
@@ -116,13 +113,13 @@ maybe('volume lifecycle', () => {
         fs.rmSync(out, { recursive: true, force: true });
       }
     } finally {
-      destroyVolume(exName);
+      await destroyVolume(exName);
     }
   });
 
   it('extracts a 5 MB file and reports accurate byte count', async () => {
     const n = `light-runner-5mb-${Date.now().toString(36)}`;
-    createVolume(n);
+    await createVolume(n, n);
     try {
       const d = fs.mkdtempSync(path.join(os.tmpdir(), 'light-runner-5mb-'));
       try {
@@ -147,13 +144,13 @@ maybe('volume lifecycle', () => {
         fs.rmSync(d, { recursive: true, force: true });
       }
     } finally {
-      destroyVolume(n);
+      await destroyVolume(n);
     }
   });
 
   it('extract auto-creates missing parent directories on the host', async () => {
     const n = `light-runner-mkd-${Date.now().toString(36)}`;
-    createVolume(n);
+    await createVolume(n, n);
     try {
       const d = fs.mkdtempSync(path.join(os.tmpdir(), 'light-runner-mkd-'));
       try {
@@ -174,13 +171,13 @@ maybe('volume lifecycle', () => {
         fs.rmSync(d, { recursive: true, force: true });
       }
     } finally {
-      destroyVolume(n);
+      await destroyVolume(n);
     }
   });
 
   it('extract reports error when destination exists as a file', async () => {
     const n = `light-runner-coll-${Date.now().toString(36)}`;
-    createVolume(n);
+    await createVolume(n, n);
     try {
       const d = fs.mkdtempSync(path.join(os.tmpdir(), 'light-runner-coll-'));
       try {
@@ -202,13 +199,13 @@ maybe('volume lifecycle', () => {
         fs.rmSync(d, { recursive: true, force: true });
       }
     } finally {
-      destroyVolume(n);
+      await destroyVolume(n);
     }
   });
 
   it('extract rejects empty from/to', async () => {
     const n = `light-runner-empty-ex-${Date.now().toString(36)}`;
-    createVolume(n);
+    await createVolume(n, n);
     try {
       await seedVolume(n, { dir: undefined, workdir: DEFAULT_WORKDIR });
       const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'light-runner-empty-ex-'));
@@ -223,7 +220,7 @@ maybe('volume lifecycle', () => {
         fs.rmSync(outDir, { recursive: true, force: true });
       }
     } finally {
-      destroyVolume(n);
+      await destroyVolume(n);
     }
   });
 });
