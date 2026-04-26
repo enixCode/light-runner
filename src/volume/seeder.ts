@@ -1,7 +1,7 @@
 import type { Duplex } from 'node:stream';
 import type Dockerode from 'dockerode';
 import { SEEDER_IMAGE } from '../constants.js';
-import { docker } from '../docker.js';
+import { createContainerWithPull, docker } from '../docker.js';
 
 /*
  * Helpers shared by seed.ts and extract.ts. Both spawn a throwaway alpine
@@ -15,7 +15,7 @@ export function createSeederContainer(
   workdir: string,
   script: string,
 ): Promise<Dockerode.Container> {
-  return docker.createContainer({
+  return createContainerWithPull({
     Image: SEEDER_IMAGE,
     Cmd: ['sh', '-c', script],
     Tty: false,

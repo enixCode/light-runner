@@ -11,7 +11,7 @@ import {
   reapAgeMs,
 } from './constants.js';
 import { buildContainerCreateOptions } from './createOptions.js';
-import { docker, pingDaemon } from './docker.js';
+import { createContainerWithPull, docker, pingDaemon } from './docker.js';
 import { LightRunnerError } from './errors.js';
 import { Execution } from './Execution.js';
 import { listStates, readState, updateState, writeState } from './state.js';
@@ -219,7 +219,7 @@ export class DockerRunner {
     });
 
     try {
-      state.container = await docker.createContainer(createOpts);
+      state.container = await createContainerWithPull(createOpts);
     } catch (err) {
       throw new LightRunnerError({
         code: 'CONTAINER_START_FAILED',
