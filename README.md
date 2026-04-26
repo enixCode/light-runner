@@ -415,4 +415,4 @@ Roadmap items are not public API and are subject to change.
 
 ## License
 
-[AGPL-3.0](LICENSE)
+[MIT](LICENSE)

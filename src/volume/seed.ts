@@ -4,7 +4,7 @@ import { PassThrough } from 'node:stream';
 import type { Duplex, Readable } from 'node:stream';
 import { create as createTar } from 'tar';
 import { DEFAULT_IGNORES, SEEDER_IMAGE } from '../constants.js';
-import { docker } from '../docker.js';
+import { createContainerWithPull } from '../docker.js';
 import { LightRunnerError } from '../errors.js';
 import { shellQuote } from './seeder.js';
 
@@ -35,7 +35,7 @@ export async function seedVolume(name: string, { workdir, dir }: SeedOptions): P
 
   const wq = shellQuote(workdir);
   // Inline because we need hijacked stdin (seeder.ts helper is read-only).
-  const container = await docker.createContainer({
+  const container = await createContainerWithPull({
     Image: SEEDER_IMAGE,
     Cmd: ['sh', '-c', `tar xf - -C ${wq} && chmod -R a+rwX ${wq}`],
     Tty: false,
