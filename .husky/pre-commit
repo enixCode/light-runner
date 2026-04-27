@@ -7,7 +7,7 @@ staged=$(git diff --cached --name-only --diff-filter=ACMR)
 echo "$staged" | grep -qE '^src/' || exit 0
 
 echo "[pre-commit] src/ changed - regenerating docs/api/ ..."
-npm run --silent docs > /dev/null
+npm run --silent docs:typedoc > /dev/null
 
 git add docs/api/
 

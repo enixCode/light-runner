@@ -10,14 +10,9 @@
   "excludePrivate": true,
   "excludeProtected": false,
   "disableSources": false,
-  "githubPages": true,
-  "hideGenerator": false,
-  "navigationLinks": {
-    "Homepage": "https://enixcode.github.io/light-runner/",
-    "GitHub": "https://github.com/enixCode/light-runner",
-    "npm": "https://www.npmjs.com/package/light-runner"
-  },
-  "sidebarLinks": {
-    "Main site": "../index.html"
-  }
+  "plugin": ["typedoc-plugin-markdown"],
+  "hideBreadcrumbs": false,
+  "useCodeBlocks": true,
+  "expandObjects": true,
+  "entryFileName": "index"
 }
