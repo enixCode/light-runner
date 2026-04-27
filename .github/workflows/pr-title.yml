@@ -1,0 +1,40 @@
+name: PR title
+
+# The squash-merge commit on `main` reuses the PR title verbatim, so we
+# validate the title against Conventional Commits before letting the PR merge.
+# Body discipline (3-5 bullet points summarising the branch) is the author's
+# responsibility - see CLAUDE.md "Commit & merge conventions".
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  validate:
+    name: Validate PR title (Conventional Commits)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            refactor
+            perf
+            docs
+            test
+            build
+            ci
+            chore
+            style
+            revert
+          requireScope: false
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            The subject "{subject}" should start with a lowercase letter.
+            Example: feat(extract): support trailing slash in from path

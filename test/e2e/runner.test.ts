@@ -233,7 +233,14 @@ maybe('DockerRunner.run', () => {
     assert.equal(result.exitCode, 7, 'wget should fail with network=none');
   });
 
-  it('fails fast on a non-existent image', async () => {
+  it('rejects with CONTAINER_START_FAILED on a non-existent image', async () => {
+    /*
+     * v0.10 behaviour: dockerode tries to pull a missing image and surfaces
+     * "pull access denied / repository does not exist" as a structured
+     * `LightRunnerError`. The test asserts the rejection reaches the caller
+     * (no silent hang) - this used to resolve with `success: false` under
+     * the docker CLI transport, which auto-pulled and exited 125.
+     */
     const runner = new DockerRunner();
     const exec = runner.run({
       image: 'light-runner-nope-does-not-exist:latest',
@@ -241,9 +248,11 @@ maybe('DockerRunner.run', () => {
       timeout: 15000,
       network: 'none',
     });
-    const result = await exec.result;
-    assert.equal(result.success, false);
-    assert.notEqual(result.exitCode, 0);
+    await assert.rejects(
+      () => exec.result,
+      (err: Error & { code?: string }) =>
+        err.name === 'LightRunnerError' && err.code === 'CONTAINER_START_FAILED',
+    );
   });
 
   it('isolates concurrent runs (no cross-contamination)', async () => {

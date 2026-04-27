@@ -1,5 +1,6 @@
 import http from 'node:http';
 import Docker from 'dockerode';
+import type Dockerode from 'dockerode';
 import { DOCKER_PING_TIMEOUT_MS } from './constants.js';
 import { LightRunnerError } from './errors.js';
 
@@ -124,4 +125,39 @@ export async function pingDaemon(timeoutMs: number = DOCKER_PING_TIMEOUT_MS): Pr
     dockerOp: 'ping',
     cause: result.error,
   });
+}
+
+/*
+ * Stream-based pull, awaited to completion. The dockerode `pull` returns a
+ * progress stream that must be drained via `followProgress` before the image
+ * is actually available - awaiting only the call without draining races and
+ * the immediately-following createContainer can still 404.
+ */
+export async function pullImage(image: string): Promise<void> {
+  const stream = (await docker.pull(image)) as NodeJS.ReadableStream;
+  await new Promise<void>((resolve, reject) => {
+    docker.modem.followProgress(
+      stream,
+      (err: Error | null) => (err ? reject(err) : resolve()),
+    );
+  });
+}
+
+/*
+ * `dockerode.createContainer` does NOT auto-pull a missing image (unlike the
+ * docker CLI's `docker run`). This helper restores that behaviour: try to
+ * create, and if Docker reports "No such image" we pull the image and retry
+ * exactly once. Any other failure surfaces unchanged.
+ */
+export async function createContainerWithPull(
+  opts: Dockerode.ContainerCreateOptions,
+): Promise<Dockerode.Container> {
+  try {
+    return await docker.createContainer(opts);
+  } catch (err) {
+    const msg = (err as Error).message ?? '';
+    if (!opts.Image || !/no such image/i.test(msg)) throw err;
+    await pullImage(opts.Image);
+    return docker.createContainer(opts);
+  }
 }
