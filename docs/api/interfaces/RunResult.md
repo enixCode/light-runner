@@ -6,7 +6,7 @@
 
 # Interface: RunResult
 
-Defined in: [src/types.ts:81](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L81)
+Defined in: [src/types.ts:81](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L81)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [src/types.ts:81](https://github.com/enixCode/light-runner/blob/58ee
 cancelled: boolean;
 ```
 
-Defined in: [src/types.ts:85](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L85)
+Defined in: [src/types.ts:85](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L85)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [src/types.ts:85](https://github.com/enixCode/light-runner/blob/58ee
 duration: number;
 ```
 
-Defined in: [src/types.ts:84](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L84)
+Defined in: [src/types.ts:84](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L84)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [src/types.ts:84](https://github.com/enixCode/light-runner/blob/58ee
 exitCode: number;
 ```
 
-Defined in: [src/types.ts:83](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L83)
+Defined in: [src/types.ts:83](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L83)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [src/types.ts:83](https://github.com/enixCode/light-runner/blob/58ee
 optional extracted?: ExtractResult[];
 ```
 
-Defined in: [src/types.ts:87](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L87)
+Defined in: [src/types.ts:87](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L87)
 
 Status of each requested extract. Present only if `extract` was set.
 
@@ -58,4 +58,4 @@ Status of each requested extract. Present only if `extract` was set.
 success: boolean;
 ```
 
-Defined in: [src/types.ts:82](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L82)
+Defined in: [src/types.ts:82](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L82)

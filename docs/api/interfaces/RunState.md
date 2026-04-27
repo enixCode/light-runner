@@ -6,7 +6,7 @@
 
 # Interface: RunState
 
-Defined in: [src/state.ts:8](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/state.ts#L8)
+Defined in: [src/state.ts:8](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/state.ts#L8)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [src/state.ts:8](https://github.com/enixCode/light-runner/blob/58eee
 optional cancelled?: boolean;
 ```
 
-Defined in: [src/state.ts:27](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/state.ts#L27)
+Defined in: [src/state.ts:27](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/state.ts#L27)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [src/state.ts:27](https://github.com/enixCode/light-runner/blob/58ee
 optional command?: string;
 ```
 
-Defined in: [src/state.ts:14](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/state.ts#L14)
+Defined in: [src/state.ts:14](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/state.ts#L14)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [src/state.ts:14](https://github.com/enixCode/light-runner/blob/58ee
 container: string;
 ```
 
-Defined in: [src/state.ts:10](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/state.ts#L10)
+Defined in: [src/state.ts:10](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/state.ts#L10)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [src/state.ts:10](https://github.com/enixCode/light-runner/blob/58ee
 optional durationMs?: number;
 ```
 
-Defined in: [src/state.ts:21](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/state.ts#L21)
+Defined in: [src/state.ts:21](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/state.ts#L21)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [src/state.ts:21](https://github.com/enixCode/light-runner/blob/58ee
 optional exitCode?: number;
 ```
 
-Defined in: [src/state.ts:20](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/state.ts#L20)
+Defined in: [src/state.ts:20](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/state.ts#L20)
 
 ***
 
@@ -66,7 +66,7 @@ Defined in: [src/state.ts:20](https://github.com/enixCode/light-runner/blob/58ee
 optional extract?: ExtractSpec[];
 ```
 
-Defined in: [src/state.ts:16](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/state.ts#L16)
+Defined in: [src/state.ts:16](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/state.ts#L16)
 
 ***
 
@@ -76,7 +76,7 @@ Defined in: [src/state.ts:16](https://github.com/enixCode/light-runner/blob/58ee
 optional finishedAt?: string;
 ```
 
-Defined in: [src/state.ts:18](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/state.ts#L18)
+Defined in: [src/state.ts:18](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/state.ts#L18)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [src/state.ts:18](https://github.com/enixCode/light-runner/blob/58ee
 id: string;
 ```
 
-Defined in: [src/state.ts:9](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/state.ts#L9)
+Defined in: [src/state.ts:9](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/state.ts#L9)
 
 ***
 
@@ -96,7 +96,7 @@ Defined in: [src/state.ts:9](https://github.com/enixCode/light-runner/blob/58eee
 image: string;
 ```
 
-Defined in: [src/state.ts:12](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/state.ts#L12)
+Defined in: [src/state.ts:12](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/state.ts#L12)
 
 ***
 
@@ -106,7 +106,7 @@ Defined in: [src/state.ts:12](https://github.com/enixCode/light-runner/blob/58ee
 startedAt: string;
 ```
 
-Defined in: [src/state.ts:17](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/state.ts#L17)
+Defined in: [src/state.ts:17](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/state.ts#L17)
 
 ***
 
@@ -116,7 +116,7 @@ Defined in: [src/state.ts:17](https://github.com/enixCode/light-runner/blob/58ee
 status: "running" | "exited" | "cancelled" | "failed";
 ```
 
-Defined in: [src/state.ts:19](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/state.ts#L19)
+Defined in: [src/state.ts:19](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/state.ts#L19)
 
 ***
 
@@ -126,7 +126,7 @@ Defined in: [src/state.ts:19](https://github.com/enixCode/light-runner/blob/58ee
 optional timeout?: number;
 ```
 
-Defined in: [src/state.ts:15](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/state.ts#L15)
+Defined in: [src/state.ts:15](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/state.ts#L15)
 
 ***
 
@@ -136,7 +136,7 @@ Defined in: [src/state.ts:15](https://github.com/enixCode/light-runner/blob/58ee
 volume: string;
 ```
 
-Defined in: [src/state.ts:11](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/state.ts#L11)
+Defined in: [src/state.ts:11](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/state.ts#L11)
 
 ***
 
@@ -146,4 +146,4 @@ Defined in: [src/state.ts:11](https://github.com/enixCode/light-runner/blob/58ee
 workdir: string;
 ```
 
-Defined in: [src/state.ts:13](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/state.ts#L13)
+Defined in: [src/state.ts:13](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/state.ts#L13)

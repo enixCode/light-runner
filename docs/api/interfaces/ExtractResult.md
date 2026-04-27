@@ -6,7 +6,7 @@
 
 # Interface: ExtractResult
 
-Defined in: [src/types.ts:26](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L26)
+Defined in: [src/types.ts:26](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L26)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [src/types.ts:26](https://github.com/enixCode/light-runner/blob/58ee
 optional bytes?: number;
 ```
 
-Defined in: [src/types.ts:31](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L31)
+Defined in: [src/types.ts:31](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L31)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [src/types.ts:31](https://github.com/enixCode/light-runner/blob/58ee
 optional error?: string;
 ```
 
-Defined in: [src/types.ts:30](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L30)
+Defined in: [src/types.ts:30](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L30)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [src/types.ts:30](https://github.com/enixCode/light-runner/blob/58ee
 from: string;
 ```
 
-Defined in: [src/types.ts:27](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L27)
+Defined in: [src/types.ts:27](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L27)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [src/types.ts:27](https://github.com/enixCode/light-runner/blob/58ee
 status: "ok" | "missing" | "error";
 ```
 
-Defined in: [src/types.ts:29](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L29)
+Defined in: [src/types.ts:29](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L29)
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: [src/types.ts:29](https://github.com/enixCode/light-runner/blob/58ee
 to: string;
 ```
 
-Defined in: [src/types.ts:28](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L28)
+Defined in: [src/types.ts:28](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L28)

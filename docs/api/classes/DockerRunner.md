@@ -6,7 +6,7 @@
 
 # Class: DockerRunner
 
-Defined in: [src/DockerRunner.ts:36](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/DockerRunner.ts#L36)
+Defined in: [src/DockerRunner.ts:36](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/DockerRunner.ts#L36)
 
 ## Constructors
 
@@ -16,7 +16,7 @@ Defined in: [src/DockerRunner.ts:36](https://github.com/enixCode/light-runner/bl
 new DockerRunner(options?): DockerRunner;
 ```
 
-Defined in: [src/DockerRunner.ts:39](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/DockerRunner.ts#L39)
+Defined in: [src/DockerRunner.ts:39](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/DockerRunner.ts#L39)
 
 #### Parameters
 
@@ -36,7 +36,7 @@ Defined in: [src/DockerRunner.ts:39](https://github.com/enixCode/light-runner/bl
 run(request): Execution;
 ```
 
-Defined in: [src/DockerRunner.ts:49](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/DockerRunner.ts#L49)
+Defined in: [src/DockerRunner.ts:49](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/DockerRunner.ts#L49)
 
 #### Parameters
 
@@ -56,7 +56,7 @@ Defined in: [src/DockerRunner.ts:49](https://github.com/enixCode/light-runner/bl
 static attach(id): Execution | null;
 ```
 
-Defined in: [src/DockerRunner.ts:252](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/DockerRunner.ts#L252)
+Defined in: [src/DockerRunner.ts:252](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/DockerRunner.ts#L252)
 
 #### Parameters
 
@@ -76,7 +76,7 @@ Defined in: [src/DockerRunner.ts:252](https://github.com/enixCode/light-runner/b
 static cleanupOrphanStates(): Promise<number>;
 ```
 
-Defined in: [src/DockerRunner.ts:345](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/DockerRunner.ts#L345)
+Defined in: [src/DockerRunner.ts:345](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/DockerRunner.ts#L345)
 
 #### Returns
 
@@ -90,7 +90,7 @@ Defined in: [src/DockerRunner.ts:345](https://github.com/enixCode/light-runner/b
 static cleanupOrphanVolumes(): Promise<number>;
 ```
 
-Defined in: [src/DockerRunner.ts:243](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/DockerRunner.ts#L243)
+Defined in: [src/DockerRunner.ts:243](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/DockerRunner.ts#L243)
 
 #### Returns
 
@@ -104,7 +104,7 @@ Defined in: [src/DockerRunner.ts:243](https://github.com/enixCode/light-runner/b
 static isAvailable(): Promise<boolean>;
 ```
 
-Defined in: [src/DockerRunner.ts:234](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/DockerRunner.ts#L234)
+Defined in: [src/DockerRunner.ts:234](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/DockerRunner.ts#L234)
 
 #### Returns
 
@@ -118,7 +118,7 @@ Defined in: [src/DockerRunner.ts:234](https://github.com/enixCode/light-runner/b
 static list(): RunState[];
 ```
 
-Defined in: [src/DockerRunner.ts:335](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/DockerRunner.ts#L335)
+Defined in: [src/DockerRunner.ts:335](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/DockerRunner.ts#L335)
 
 #### Returns
 
@@ -135,7 +135,7 @@ static reapOrphans(): Promise<{
 }>;
 ```
 
-Defined in: [src/DockerRunner.ts:367](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/DockerRunner.ts#L367)
+Defined in: [src/DockerRunner.ts:367](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/DockerRunner.ts#L367)
 
 #### Returns
 

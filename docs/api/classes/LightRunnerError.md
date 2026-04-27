@@ -6,7 +6,7 @@
 
 # Class: LightRunnerError
 
-Defined in: [src/errors.ts:22](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/errors.ts#L22)
+Defined in: [src/errors.ts:22](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/errors.ts#L22)
 
 ## Extends
 
@@ -20,7 +20,7 @@ Defined in: [src/errors.ts:22](https://github.com/enixCode/light-runner/blob/58e
 new LightRunnerError(opts): LightRunnerError;
 ```
 
-Defined in: [src/errors.ts:27](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/errors.ts#L27)
+Defined in: [src/errors.ts:27](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/errors.ts#L27)
 
 #### Parameters
 
@@ -62,7 +62,7 @@ Error.cause
 readonly code: LightRunnerErrorCode;
 ```
 
-Defined in: [src/errors.ts:23](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/errors.ts#L23)
+Defined in: [src/errors.ts:23](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/errors.ts#L23)
 
 ***
 
@@ -72,7 +72,7 @@ Defined in: [src/errors.ts:23](https://github.com/enixCode/light-runner/blob/58e
 readonly optional containerId?: string;
 ```
 
-Defined in: [src/errors.ts:25](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/errors.ts#L25)
+Defined in: [src/errors.ts:25](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/errors.ts#L25)
 
 ***
 
@@ -82,7 +82,7 @@ Defined in: [src/errors.ts:25](https://github.com/enixCode/light-runner/blob/58e
 readonly optional dockerOp?: string;
 ```
 
-Defined in: [src/errors.ts:24](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/errors.ts#L24)
+Defined in: [src/errors.ts:24](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/errors.ts#L24)
 
 ***
 
@@ -172,7 +172,7 @@ toJSON(): {
 };
 ```
 
-Defined in: [src/errors.ts:35](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/errors.ts#L35)
+Defined in: [src/errors.ts:35](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/errors.ts#L35)
 
 #### Returns
 

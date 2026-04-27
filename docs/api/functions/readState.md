@@ -10,7 +10,7 @@
 function readState(id): RunState | null;
 ```
 
-Defined in: [src/state.ts:46](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/state.ts#L46)
+Defined in: [src/state.ts:46](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/state.ts#L46)
 
 ## Parameters
 

@@ -6,7 +6,7 @@
 
 # Interface: RunnerOptions
 
-Defined in: [src/types.ts:3](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L3)
+Defined in: [src/types.ts:3](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L3)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [src/types.ts:3](https://github.com/enixCode/light-runner/blob/58eee
 optional cpus?: string;
 ```
 
-Defined in: [src/types.ts:5](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L5)
+Defined in: [src/types.ts:5](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L5)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [src/types.ts:5](https://github.com/enixCode/light-runner/blob/58eee
 optional gpus?: string | number;
 ```
 
-Defined in: [src/types.ts:7](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L7)
+Defined in: [src/types.ts:7](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L7)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [src/types.ts:7](https://github.com/enixCode/light-runner/blob/58eee
 optional memory?: string;
 ```
 
-Defined in: [src/types.ts:4](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L4)
+Defined in: [src/types.ts:4](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L4)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [src/types.ts:4](https://github.com/enixCode/light-runner/blob/58eee
 optional noNewPrivileges?: boolean;
 ```
 
-Defined in: [src/types.ts:8](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L8)
+Defined in: [src/types.ts:8](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L8)
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: [src/types.ts:8](https://github.com/enixCode/light-runner/blob/58eee
 optional runtime?: Runtime;
 ```
 
-Defined in: [src/types.ts:6](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L6)
+Defined in: [src/types.ts:6](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L6)

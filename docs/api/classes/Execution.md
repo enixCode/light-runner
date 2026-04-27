@@ -6,7 +6,7 @@
 
 # Class: Execution
 
-Defined in: [src/Execution.ts:17](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/Execution.ts#L17)
+Defined in: [src/Execution.ts:17](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/Execution.ts#L17)
 
 ## Constructors
 
@@ -19,7 +19,7 @@ new Execution(
    onCancel): Execution;
 ```
 
-Defined in: [src/Execution.ts:22](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/Execution.ts#L22)
+Defined in: [src/Execution.ts:22](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/Execution.ts#L22)
 
 #### Parameters
 
@@ -47,7 +47,7 @@ Defined in: [src/Execution.ts:22](https://github.com/enixCode/light-runner/blob/
 readonly id: string;
 ```
 
-Defined in: [src/Execution.ts:18](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/Execution.ts#L18)
+Defined in: [src/Execution.ts:18](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/Execution.ts#L18)
 
 ***
 
@@ -57,7 +57,7 @@ Defined in: [src/Execution.ts:18](https://github.com/enixCode/light-runner/blob/
 readonly result: Promise<RunResult>;
 ```
 
-Defined in: [src/Execution.ts:19](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/Execution.ts#L19)
+Defined in: [src/Execution.ts:19](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/Execution.ts#L19)
 
 ## Accessors
 
@@ -69,7 +69,7 @@ Defined in: [src/Execution.ts:19](https://github.com/enixCode/light-runner/blob/
 get cancelled(): boolean;
 ```
 
-Defined in: [src/Execution.ts:45](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/Execution.ts#L45)
+Defined in: [src/Execution.ts:45](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/Execution.ts#L45)
 
 ##### Returns
 
@@ -83,7 +83,7 @@ Defined in: [src/Execution.ts:45](https://github.com/enixCode/light-runner/blob/
 cancel(): void;
 ```
 
-Defined in: [src/Execution.ts:36](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/Execution.ts#L36)
+Defined in: [src/Execution.ts:36](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/Execution.ts#L36)
 
 #### Returns
 
@@ -97,7 +97,7 @@ Defined in: [src/Execution.ts:36](https://github.com/enixCode/light-runner/blob/
 pause(): Promise<void>;
 ```
 
-Defined in: [src/Execution.ts:92](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/Execution.ts#L92)
+Defined in: [src/Execution.ts:92](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/Execution.ts#L92)
 
 #### Returns
 
@@ -111,7 +111,7 @@ Defined in: [src/Execution.ts:92](https://github.com/enixCode/light-runner/blob/
 resume(): Promise<void>;
 ```
 
-Defined in: [src/Execution.ts:100](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/Execution.ts#L100)
+Defined in: [src/Execution.ts:100](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/Execution.ts#L100)
 
 #### Returns
 
@@ -125,7 +125,7 @@ Defined in: [src/Execution.ts:100](https://github.com/enixCode/light-runner/blob
 stop(options?): Promise<void>;
 ```
 
-Defined in: [src/Execution.ts:54](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/Execution.ts#L54)
+Defined in: [src/Execution.ts:54](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/Execution.ts#L54)
 
 #### Parameters
 

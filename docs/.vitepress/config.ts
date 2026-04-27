@@ -23,6 +23,58 @@ const GUIDES = [
   { text: 'gVisor & Kata', link: '/guides/gvisor-kata' },
 ];
 
+/*
+ * API sidebar mirrors the directory tree typedoc-plugin-markdown emits under
+ * docs/api/. Adding a new public export -> regenerate the API ref via
+ * `npm run docs:typedoc`, then add the corresponding entry here. The list is
+ * hand-maintained because VitePress does not auto-generate sidebars from a
+ * folder scan.
+ */
+const API_SIDEBAR = [
+  {
+    text: 'Overview',
+    items: [{ text: 'Public surface', link: '/api/' }],
+  },
+  {
+    text: 'Classes',
+    collapsed: false,
+    items: [
+      { text: 'DockerRunner', link: '/api/classes/DockerRunner' },
+      { text: 'Execution', link: '/api/classes/Execution' },
+      { text: 'LightRunnerError', link: '/api/classes/LightRunnerError' },
+    ],
+  },
+  {
+    text: 'Interfaces',
+    collapsed: false,
+    items: [
+      { text: 'RunRequest', link: '/api/interfaces/RunRequest' },
+      { text: 'RunResult', link: '/api/interfaces/RunResult' },
+      { text: 'RunnerOptions', link: '/api/interfaces/RunnerOptions' },
+      { text: 'ExtractSpec', link: '/api/interfaces/ExtractSpec' },
+      { text: 'ExtractResult', link: '/api/interfaces/ExtractResult' },
+      { text: 'StopOptions', link: '/api/interfaces/StopOptions' },
+      { text: 'RunState', link: '/api/interfaces/RunState' },
+    ],
+  },
+  {
+    text: 'Functions',
+    collapsed: false,
+    items: [
+      { text: 'listStates', link: '/api/functions/listStates' },
+      { text: 'readState', link: '/api/functions/readState' },
+    ],
+  },
+  {
+    text: 'Type aliases',
+    collapsed: false,
+    items: [
+      { text: 'Runtime', link: '/api/type-aliases/Runtime' },
+      { text: 'LightRunnerErrorCode', link: '/api/type-aliases/LightRunnerErrorCode' },
+    ],
+  },
+];
+
 export default defineConfig({
   title: 'light-runner',
   description: 'Run untrusted code in hardened Docker containers from Node.js',
@@ -48,6 +100,12 @@ export default defineConfig({
     ['meta', { name: 'twitter:image', content: 'https://enixcode.github.io/light-runner/banner.webp' }],
   ],
 
+  // Bespoke landing + custom theme are dark-only by design (deep ink ground,
+  // cyan halo accents, noise + grid background). A light mode would have to
+  // be redesigned from scratch, so we lock the appearance to dark and hide
+  // the toggle entirely.
+  appearance: 'force-dark',
+
   themeConfig: {
     nav: [
       { text: 'Guides', link: '/guides/quickstart', activeMatch: '^/guides/' },
@@ -65,9 +123,7 @@ export default defineConfig({
       '/guides/': [
         { text: 'Guides', items: GUIDES },
       ],
-      '/api/': [
-        { text: 'API reference', link: '/api/' },
-      ],
+      '/api/': API_SIDEBAR,
     },
 
     socialLinks: [{ icon: 'github', link: 'https://github.com/enixCode/light-runner' }],

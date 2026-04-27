@@ -6,7 +6,7 @@
 
 # Interface: RunRequest
 
-Defined in: [src/types.ts:34](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L34)
+Defined in: [src/types.ts:34](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L34)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [src/types.ts:34](https://github.com/enixCode/light-runner/blob/58ee
 optional command?: string;
 ```
 
-Defined in: [src/types.ts:41](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L41)
+Defined in: [src/types.ts:41](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L41)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [src/types.ts:41](https://github.com/enixCode/light-runner/blob/58ee
 optional detached?: boolean;
 ```
 
-Defined in: [src/types.ts:78](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L78)
+Defined in: [src/types.ts:78](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L78)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [src/types.ts:78](https://github.com/enixCode/light-runner/blob/58ee
 optional dir?: string;
 ```
 
-Defined in: [src/types.ts:48](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L48)
+Defined in: [src/types.ts:48](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L48)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [src/types.ts:48](https://github.com/enixCode/light-runner/blob/58ee
 optional env?: Record<string, string>;
 ```
 
-Defined in: [src/types.ts:57](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L57)
+Defined in: [src/types.ts:57](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L57)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [src/types.ts:57](https://github.com/enixCode/light-runner/blob/58ee
 optional extract?: ExtractSpec[];
 ```
 
-Defined in: [src/types.ts:66](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L66)
+Defined in: [src/types.ts:66](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L66)
 
 ***
 
@@ -66,7 +66,7 @@ Defined in: [src/types.ts:66](https://github.com/enixCode/light-runner/blob/58ee
 image: string;
 ```
 
-Defined in: [src/types.ts:35](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L35)
+Defined in: [src/types.ts:35](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L35)
 
 ***
 
@@ -76,7 +76,7 @@ Defined in: [src/types.ts:35](https://github.com/enixCode/light-runner/blob/58ee
 optional input?: unknown;
 ```
 
-Defined in: [src/types.ts:49](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L49)
+Defined in: [src/types.ts:49](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L49)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [src/types.ts:49](https://github.com/enixCode/light-runner/blob/58ee
 optional network?: string;
 ```
 
-Defined in: [src/types.ts:56](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L56)
+Defined in: [src/types.ts:56](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L56)
 
 ***
 
@@ -96,7 +96,7 @@ Defined in: [src/types.ts:56](https://github.com/enixCode/light-runner/blob/58ee
 optional onLog?: (line) => void;
 ```
 
-Defined in: [src/types.ts:60](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L60)
+Defined in: [src/types.ts:60](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L60)
 
 #### Parameters
 
@@ -116,7 +116,7 @@ Defined in: [src/types.ts:60](https://github.com/enixCode/light-runner/blob/58ee
 optional signal?: AbortSignal;
 ```
 
-Defined in: [src/types.ts:59](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L59)
+Defined in: [src/types.ts:59](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L59)
 
 ***
 
@@ -126,7 +126,7 @@ Defined in: [src/types.ts:59](https://github.com/enixCode/light-runner/blob/58ee
 optional timeout?: number;
 ```
 
-Defined in: [src/types.ts:50](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L50)
+Defined in: [src/types.ts:50](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L50)
 
 ***
 
@@ -136,4 +136,4 @@ Defined in: [src/types.ts:50](https://github.com/enixCode/light-runner/blob/58ee
 optional workdir?: string;
 ```
 
-Defined in: [src/types.ts:58](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/types.ts#L58)
+Defined in: [src/types.ts:58](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/types.ts#L58)

@@ -15,4 +15,4 @@ type LightRunnerErrorCode =
   | "EXTRACT_FAILED";
 ```
 
-Defined in: [src/errors.ts:1](https://github.com/enixCode/light-runner/blob/58eee63ecac117ef991d9058af46e000f0328c6c/src/errors.ts#L1)
+Defined in: [src/errors.ts:1](https://github.com/enixCode/light-runner/blob/1d600653d4731c2d3f44bd5a293b40da3c37d55c/src/errors.ts#L1)

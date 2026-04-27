@@ -1,0 +1,546 @@
+/*
+ * light-runner / VitePress theme overrides.
+ * Mirrors the bespoke landing's design language onto every guide and API page.
+ *
+ * Layers:
+ *   1. Fonts: Fraunces (display), IBM Plex Sans (body), JetBrains Mono (labels/code)
+ *   2. Palette tokens: dark ink, glacial cyan halo, amber/ember accents
+ *   3. Background: fixed-position GPU-composited noise + grid (zero scroll cost)
+ *   4. Chrome: nav, sidebar, content typography, code blocks, search dialog
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ---------- Palette + token bridge ---------- */
+
+:root {
+  --ink:          #050608;
+  --ink-2:        #0a0c10;
+  --ink-3:        #12151c;
+  --line:         #1a1d24;
+  --line-hot:     #242933;
+  --paper:        #edeef0;
+  --paper-dim:    #8a8f9a;
+  --paper-dimmer: #4d525c;
+  --halo:         #c7e8ff;
+  --halo-soft:    #7fddff;
+  --amber:        #ffb855;
+  --ember:        #ff6b35;
+}
+
+/* Map our palette onto VitePress' design tokens. */
+:root {
+  --vp-c-bg:                 var(--ink);
+  --vp-c-bg-alt:             var(--ink-2);
+  --vp-c-bg-elv:             var(--ink-3);
+  --vp-c-bg-soft:            var(--ink-2);
+
+  --vp-c-default-1:          var(--paper);
+  --vp-c-default-2:          var(--paper-dim);
+  --vp-c-default-3:          var(--paper-dimmer);
+  --vp-c-default-soft:       rgba(127, 221, 255, 0.06);
+
+  --vp-c-brand-1:            var(--halo-soft);
+  --vp-c-brand-2:            var(--halo);
+  --vp-c-brand-3:            var(--halo-soft);
+  --vp-c-brand-soft:         rgba(127, 221, 255, 0.10);
+
+  --vp-c-tip-1:              var(--halo-soft);
+  --vp-c-tip-2:              var(--halo);
+  --vp-c-tip-soft:           rgba(127, 221, 255, 0.08);
+
+  --vp-c-warning-1:          var(--amber);
+  --vp-c-warning-2:          var(--amber);
+  --vp-c-warning-soft:       rgba(255, 184, 85, 0.08);
+
+  --vp-c-danger-1:           var(--ember);
+  --vp-c-danger-2:           var(--ember);
+  --vp-c-danger-soft:        rgba(255, 107, 53, 0.10);
+
+  --vp-c-text-1:             var(--paper);
+  --vp-c-text-2:             var(--paper-dim);
+  --vp-c-text-3:             var(--paper-dimmer);
+
+  --vp-c-divider:            var(--line);
+  --vp-c-gutter:             var(--ink);
+
+  --vp-font-family-base:     'IBM Plex Sans', system-ui, sans-serif;
+  --vp-font-family-mono:     'JetBrains Mono', monospace;
+
+  --vp-code-bg:              var(--ink-2);
+  --vp-code-block-bg:        var(--ink-2);
+  --vp-code-block-divider-color: var(--line);
+  --vp-code-line-highlight-color: rgba(127, 221, 255, 0.06);
+
+  --vp-c-shadow-3:           0 0 24px rgba(127, 221, 255, 0.08);
+
+  /* Sidebar widths slightly tighter than default for a more editorial feel. */
+  --vp-layout-max-width:     1340px;
+  --vp-sidebar-width:         252px;
+}
+
+html.dark {
+  /* Force dark — light theme would clash with the noise + halo palette. */
+  --vp-c-bg:                 var(--ink);
+  --vp-c-bg-alt:             var(--ink-2);
+}
+
+/* ---------- Body + persistent grid + noise overlay ---------- */
+
+html, body {
+  background-color: var(--ink);
+  color: var(--paper);
+}
+
+body {
+  font-family: var(--vp-font-family-base);
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: 0.005em;
+}
+
+/* Fixed GPU-composited background: noise + grid + radial halo. Same trick as
+ * the landing - one composited layer that survives scroll without repaints.
+ * Grid opacity intentionally low so the texture reads as atmosphere, not as
+ * a foreground element competing with the content. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--ink);
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.025 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(127, 221, 255, 0.03), transparent 70%),
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 180px 180px, 100% 100%, 96px 96px, 96px 96px;
+  background-position: 0 0, 0 0, 0 0, 0 0;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+#app, .Layout, .VPContent { position: relative; z-index: 1; background: transparent; }
+.VPDoc, .VPDoc.has-aside .content-container, .VPHome, .VPPage { background: transparent !important; }
+
+/* ---------- Top navbar ---------- */
+
+.VPNav {
+  background: rgba(5, 6, 8, 0.78) !important;
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid var(--line);
+}
+.VPNavBar.has-sidebar .content,
+.VPNavBar .content,
+.VPNavBar .container {
+  background: transparent !important;
+}
+.VPNavBar .title {
+  font-family: 'Fraunces', serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  font-size: 17px;
+  color: var(--paper);
+}
+/* Glowing dot before the site title - mirrors the .mark-dot of the landing. */
+.VPNavBarTitle .title::before {
+  content: "";
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--halo);
+  box-shadow: 0 0 14px var(--halo-soft), 0 0 3px #fff inset;
+  margin-right: 12px;
+  vertical-align: middle;
+  transform: translateY(-1px);
+}
+.VPNavBarMenuLink, .VPNavBarMenuGroup .text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--paper-dim) !important;
+  transition: color .2s;
+}
+.VPNavBarMenuLink:hover, .VPNavBarMenuGroup:hover .text { color: var(--paper) !important; }
+.VPNavBarMenuLink.active { color: var(--halo) !important; }
+
+.VPNavBarSocialLinks svg { transition: transform .2s, color .2s; }
+.VPNavBarSocialLinks a:hover svg { color: var(--halo) !important; transform: translateY(-1px); }
+
+/* ---------- Sidebar ---------- */
+
+.VPSidebar {
+  background: rgba(10, 12, 16, 0.55) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-right: 1px solid var(--line);
+  padding-top: 16px;
+}
+.VPSidebarItem .text {
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  letter-spacing: 0.005em;
+  color: var(--paper-dim);
+}
+.VPSidebarItem.is-active > .item .text,
+.VPSidebarItem.has-active > .item .text { color: var(--halo) !important; font-weight: 500; }
+.VPSidebarItem.level-0 > .item .text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--paper-dimmer);
+}
+.VPSidebarItem.level-0 > .item .text::before {
+  content: "// ";
+  color: var(--halo-soft);
+}
+.VPSidebarItem .link:hover .text { color: var(--paper) !important; }
+
+/* ---------- Document layout + typography ---------- */
+
+.VPDoc .container {
+  padding-top: 28px;
+}
+.VPDoc h1, .VPDoc h2, .VPDoc h3, .VPDoc h4 {
+  font-family: 'Fraunces', serif;
+  letter-spacing: -0.018em;
+  color: var(--paper);
+}
+.VPDoc h1 {
+  font-weight: 350;
+  font-style: italic;
+  font-size: clamp(40px, 5vw, 64px);
+  line-height: 1.05;
+  margin-bottom: 28px;
+}
+.VPDoc h1 .strong, .VPDoc h2 .strong { color: var(--halo); font-style: normal; }
+.VPDoc h2 {
+  font-weight: 350;
+  font-style: italic;
+  font-size: clamp(26px, 2.6vw, 34px);
+  line-height: 1.15;
+  margin-top: 56px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.VPDoc h2::before {
+  content: "// ";
+  font-style: normal;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--halo-soft);
+  vertical-align: middle;
+  margin-right: 6px;
+  text-transform: uppercase;
+  display: inline-block;
+  padding: 0 6px 1px 0;
+}
+.VPDoc h3 {
+  font-weight: 400;
+  font-size: clamp(18px, 1.3vw, 21px);
+  line-height: 1.25;
+  margin-top: 32px;
+  margin-bottom: 8px;
+  color: var(--paper);
+  letter-spacing: -0.01em;
+  font-style: normal;
+}
+.VPDoc h4 {
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.3;
+  margin-top: 22px;
+  margin-bottom: 6px;
+  color: var(--paper);
+  font-style: normal;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  letter-spacing: -0.005em;
+}
+.VPDoc h3 em, .VPDoc h2 em {
+  color: var(--halo);
+  font-style: italic;
+  font-weight: 300;
+}
+.VPDoc p { color: var(--paper); font-weight: 300; margin: 10px 0; }
+.VPDoc p em { color: var(--paper-dim); font-style: italic; }
+.VPDoc strong { color: var(--paper); font-weight: 500; }
+/* TypeDoc-generated "Defined in: src/foo.ts:NN" lines - dim, small, mono. */
+.VPDoc p:has(> a[href*="src/"]) {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--paper-dimmer);
+  margin: 4px 0 14px;
+  letter-spacing: 0;
+}
+.VPDoc p:has(> a[href*="src/"]) a {
+  color: var(--paper-dim);
+  border-bottom: none;
+}
+.VPDoc p:has(> a[href*="src/"]) a:hover { color: var(--halo); }
+.VPDoc hr {
+  border: none;
+  height: 1px;
+  margin: 6px 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(127, 221, 255, 0.45) 12%,
+    rgba(127, 221, 255, 0.45) 88%,
+    transparent 100%
+  );
+  box-shadow: 0 0 12px rgba(127, 221, 255, 0.25);
+}
+/* When an h3 follows an hr (typedoc property-list pattern), kill its
+ * margin-top so the divider sits flush against the next property name. */
+.VPDoc hr + h3,
+.VPDoc hr + h4 {
+  margin-top: 14px;
+}
+.VPDoc a {
+  color: var(--halo);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color .15s;
+}
+.VPDoc a:hover { border-bottom-color: var(--halo); }
+.VPDoc ul, .VPDoc ol { color: var(--paper); }
+.VPDoc li { margin: 6px 0; }
+.VPDoc hr { border-color: var(--line); margin: 48px 0; }
+
+.VPDoc blockquote {
+  border-left: 2px solid var(--halo-soft);
+  background: rgba(127, 221, 255, 0.04);
+  padding: 18px 22px;
+  margin: 24px 0;
+  color: var(--paper-dim);
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: 17px;
+}
+.VPDoc blockquote p { margin: 0; }
+.VPDoc blockquote strong { color: var(--paper); font-style: normal; }
+
+/* ---------- Tables ---------- */
+
+.VPDoc table {
+  border-collapse: collapse;
+  margin: 24px 0;
+  display: table;
+  width: 100%;
+}
+.VPDoc th, .VPDoc td {
+  border: 1px solid var(--line);
+  padding: 12px 16px;
+  text-align: left;
+  background: transparent;
+}
+.VPDoc th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--halo-soft);
+  background: rgba(127, 221, 255, 0.04);
+}
+.VPDoc tr:nth-child(2n) td { background: rgba(255, 255, 255, 0.012); }
+
+/* ---------- Inline code + code blocks ---------- */
+
+.VPDoc :not(pre) > code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  background: var(--ink-2);
+  color: var(--halo);
+  padding: 2px 7px;
+  border-radius: 2px;
+  border: 1px solid var(--line);
+}
+.VPDoc div[class*="language-"] {
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  margin: 12px 0 18px;
+  position: relative;
+  overflow: hidden;
+}
+/* On API pages h3 + code block is the dominant pattern (one per property);
+ * pull the code right under the header with no margin between them. */
+.VPDoc h3 + div[class*="language-"],
+.VPDoc h4 + div[class*="language-"] {
+  margin-top: 6px;
+}
+.VPDoc div[class*="language-"]::before {
+  /* Mac-style traffic-light dots above the code block, mirrors .code-window of landing. */
+  content: "";
+  display: block;
+  height: 32px;
+  border-bottom: 1px solid var(--line);
+  background: var(--ink-3) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='52' height='8'><circle cx='4' cy='4' r='4' fill='%23ff5f57' opacity='0.55'/><circle cx='20' cy='4' r='4' fill='%23febc2e' opacity='0.55'/><circle cx='36' cy='4' r='4' fill='%2328c840' opacity='0.55'/></svg>") 16px 12px no-repeat;
+}
+.VPDoc div[class*="language-"] pre {
+  background: transparent !important;
+  padding: 18px 24px !important;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--paper);
+}
+.VPDoc div[class*="language-"] .lang {
+  display: none; /* hide the small lang badge; the dots already mark the block */
+}
+.VPDoc div[class*="language-"] .copy {
+  top: 6px !important;
+  right: 8px !important;
+  background: transparent !important;
+  border: 1px solid var(--line-hot) !important;
+  color: var(--paper-dim) !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 9px !important;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.VPDoc div[class*="language-"] .copy:hover {
+  background: var(--halo) !important;
+  color: var(--ink) !important;
+  border-color: var(--halo) !important;
+}
+
+/* ---------- Aside (right outline) ---------- */
+
+.VPDocAside .outline-marker {
+  background: var(--halo) !important;
+}
+.VPDocAside .outline-title,
+.VPDocAside .outline-link {
+  font-family: 'JetBrains Mono', monospace;
+}
+.VPDocAside .outline-title {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--paper-dimmer);
+}
+.VPDocAside .outline-title::before {
+  content: "// ";
+  color: var(--halo-soft);
+}
+.VPDocAside .outline-link {
+  font-size: 12px;
+  color: var(--paper-dim);
+  letter-spacing: 0;
+  text-transform: none;
+  transition: color .2s;
+}
+.VPDocAside .outline-link:hover,
+.VPDocAside .outline-link.active { color: var(--halo) !important; }
+
+/* ---------- Search dialog ---------- */
+
+.VPLocalSearchBox .shell {
+  background: var(--ink-2) !important;
+  border: 1px solid var(--line-hot) !important;
+}
+.VPLocalSearchBox .search-bar {
+  background: var(--ink-3);
+  border-bottom: 1px solid var(--line);
+}
+.VPLocalSearchBox .search-input {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--paper);
+}
+.VPNavBarSearch .DocSearch-Button,
+.VPNavBarSearchButton {
+  background: transparent !important;
+  border: 1px solid var(--line) !important;
+  color: var(--paper-dim) !important;
+}
+.VPNavBarSearch .DocSearch-Button:hover { border-color: var(--halo-soft) !important; color: var(--paper) !important; }
+
+/* ---------- Edit-this-page + last-updated + prev/next ---------- */
+
+.VPDocFooter, .edit-info {
+  border-top: 1px solid var(--line);
+}
+.edit-link-button {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--paper-dim) !important;
+}
+.edit-link-button:hover { color: var(--halo) !important; }
+.last-updated {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--paper-dimmer);
+}
+.pager-link {
+  border: 1px solid var(--line);
+  background: var(--ink-2);
+  transition: border-color .2s, transform .2s;
+}
+.pager-link:hover { border-color: var(--halo-soft); transform: translateY(-1px); }
+.pager-link .desc {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--paper-dimmer);
+}
+.pager-link .title {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-weight: 300;
+  color: var(--paper);
+}
+
+/* ---------- Footer ---------- */
+
+.VPFooter {
+  background: transparent !important;
+  border-top: 1px solid var(--line);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--paper-dimmer) !important;
+}
+.VPFooter .message, .VPFooter .copyright { color: var(--paper-dimmer) !important; }
+
+/* ---------- Selection + focus ---------- */
+
+::selection { background: var(--halo); color: var(--ink); }
+a:focus-visible, button:focus-visible {
+  outline: 1px solid var(--halo);
+  outline-offset: 3px;
+  border-radius: 1px;
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* ---------- Mobile tweaks ---------- */
+
+@media (max-width: 720px) {
+  .VPDoc h2 { margin-top: 40px; }
+  .VPDoc h1 { font-size: 36px; }
+}
