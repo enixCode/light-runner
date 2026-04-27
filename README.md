@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/banner.webp" alt="light-runner banner" width="720" />
+  <img src="docs/public/banner.webp" alt="light-runner banner" width="720" />
 </p>
 
 <h1 align="center">light-runner</h1>

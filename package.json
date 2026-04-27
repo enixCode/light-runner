@@ -31,10 +31,13 @@
     "test:docker": "docker compose -f docker-compose.test.yml run --rm --build test",
     "demo": "npm run test:build && node dist/examples/main.js",
     "demo:detached": "npm run test:build && node dist/examples/detached-full.js",
-    "docs": "node -e \"require('node:fs').rmSync('docs/api',{recursive:true,force:true})\" && typedoc",
+    "docs": "npm run docs:typedoc && npm run docs:build",
     "preversion": "npm run docs && git add docs/api/",
     "prepublishOnly": "npm run build",
-    "prepare": "husky"
+    "prepare": "husky",
+    "docs:typedoc": "node -e \"require('node:fs').rmSync('docs/api',{recursive:true,force:true})\" && typedoc",
+    "docs:dev": "npm run docs:typedoc && vitepress dev docs",
+    "docs:build": "vitepress build docs"
   },
   "engines": {
     "node": ">=22"
@@ -55,7 +58,9 @@
     "@types/node": "^25.6.0",
     "husky": "^9.1.7",
     "typedoc": "^0.28.19",
-    "typescript": "^6.0.3"
+    "typedoc-plugin-markdown": "^4.11.0",
+    "typescript": "^6.0.3",
+    "vitepress": "^1.6.4"
   },
   "dependencies": {
     "dockerode": "^5.0.0",

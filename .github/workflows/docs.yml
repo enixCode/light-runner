@@ -1,0 +1,68 @@
+name: Docs
+
+# Build the VitePress site (bespoke landing in public/, guides, and TypeDoc-generated
+# API reference) and deploy it to GitHub Pages on every push to main that touches
+# the docs sources or the public surface they describe.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'typedoc.json'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+# One concurrent deploy at a time. Cancel in-flight deploys when a newer push
+# lands - the latest commit is the one users care about.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    name: Build VitePress site
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # lastUpdated needs the full history
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Regenerate TypeDoc markdown + build VitePress
+        run: npm run docs
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/.vitepress/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
