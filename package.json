@@ -1,6 +1,6 @@
 {
   "name": "light-runner",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Run isolated Docker containers from Node.js",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,8 +12,10 @@
     }
   },
   "files": [
-    "dist/*.js",
-    "dist/*.d.ts",
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "!dist/test",
+    "!dist/examples",
     "README.md",
     "LICENSE"
   ],
